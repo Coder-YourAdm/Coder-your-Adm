@@ -1,0 +1,31 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===== 大文件说明（Git LFS）=====
+# 字体(.ttf/.woff2) 与朗诵音频(.mp3) 体积较大，建议走 Git LFS。
+# 张雅萱落地素材时，若放进 public/ 并启用 LFS，请追加以下规则（本期先留空目录，不放大文件）：
+# public/fonts/*.ttf
+# public/fonts/*.woff2
+# public/audio/*.mp3
