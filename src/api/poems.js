@@ -8,6 +8,37 @@ const modules = import.meta.glob('../data/poems/*.json', { eager: true })
 // 将所有文件的诗词数组合并成一个总列表
 const ALL = Object.values(modules).flatMap(m => m.default)
 
+// 开发期自检：ID 唯一性
+// 5 人各填一个 json，若都从 0001 起编会 100% 撞车。由于改的是不同文件，
+// Git 不会报冲突，但 getPoemById 只会返回其中一个 —— 数据会静默丢失一半。
+// 这里在控制台直接暴露冲突，避免问题拖到联调阶段。
+if (import.meta.env.DEV) {
+  const seen = new Map()
+  const dupes = []
+  ALL.forEach(p => {
+    if (!p || !p.id) {
+      console.error('[poems] 发现缺少 id 的条目：', p)
+      return
+    }
+    if (seen.has(p.id)) {
+      dupes.push({ id: p.id, a: seen.get(p.id), b: p })
+      console.error(
+        `[poems] ID 冲突: ${p.id}\n` +
+        `  A: 《${seen.get(p.id).title}》${seen.get(p.id).author}\n` +
+        `  B: 《${p.title}》${p.author}`
+      )
+    } else {
+      seen.set(p.id, p)
+    }
+  })
+  if (dupes.length) {
+    console.error(
+      `[poems] 共 ${ALL.length} 条数据，唯一 ID 仅 ${seen.size} 个 —— ` +
+      `${dupes.length} 条会被静默覆盖！请检查 src/data/poems/ 下各文件的 ID 命名。`
+    )
+  }
+}
+
 /**
  * 获取全部诗词列表
  * @returns {Array} 所有诗词对象数组
@@ -69,14 +100,15 @@ export function getByForm(form) {
  */
 export function searchPoems(kw) {
   if (!kw) return []
-  const lowerKw = kw.toLowerCase()
+  const lowerKw = String(kw).toLowerCase()
   return ALL.filter(p => {
-    const haystack = (
-      p.title +
-      p.author +
-      p.content.join('') +
-      p.tags.join('')
-    ).toLowerCase()
+    // 容错：任何人的 json 少写 tags 或把 content 写成字符串时，不让整个搜索挂掉
+    const haystack = [
+      p.title || '',
+      p.author || '',
+      Array.isArray(p.content) ? p.content.join('') : (p.content || ''),
+      Array.isArray(p.tags) ? p.tags.join('') : ''
+    ].join('').toLowerCase()
     return haystack.includes(lowerKw)
   })
 }
