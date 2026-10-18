@@ -33,12 +33,12 @@ shiyun/
 │  └─ images/themes/     # 四季背景图（张雅萱）
 ├─ src/
 │  ├─ main.js            # 挂载 Pinia + Router
-│  ├─ App.vue            # 仅路由出口（布局由刘庭彰补充）
+│  ├─ App.vue            # 全局布局入口
 │  ├─ api/poems.js       # 数据接入层（徐潇）
 │  ├─ data/poems/        # 诗词 json（5 人各一个文件）
 │  ├─ router/index.js    # 路由表（陈汝桐）
-│  ├─ layout/AppLayout.vue   # 全局布局（刘庭彰）
-│  ├─ components/PoemCard.vue  # 公共卡片（刘庭彰）
+│  ├─ layout/AppLayout.vue   # 搜索框、路由出口与四项底部导航
+│  ├─ components/PoemCard.vue  # 可复用诗词卡片，点击触发 open 事件
 │  ├─ styles/theme.css   # 四季主题+字体变量（张雅萱）
 │  └─ views/             # 11 个页面占位（陈汝桐）
 └─ docs/
