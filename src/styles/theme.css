@@ -1,0 +1,196 @@
+/* ========================================
+   诗韵·古诗库
+   全局主题与字体样式
+   ======================================== */
+/* 行书：钟齐志莽行书，使用本地字体 */
+@font-face {
+  font-family: "Zhi Mang Xing";
+  src: url("/fonts/ZhiMangXing-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- 1. 全局默认设置 ---------- */
+
+:root {
+  /* 默认主题：春 */
+  --theme-bg: #f3faf0;
+  --theme-surface: rgba(255, 255, 255, 0.88);
+  --theme-text: #2f3b32;
+  --theme-text-secondary: #718071;
+  --theme-border: #dcebd8;
+  --accent: #5aa56a;
+
+  /* 字体设置 */
+  --font-ui: "Microsoft YaHei", "微软雅黑", sans-serif;
+
+  /* 通用圆角和阴影 */
+  --card-radius: 16px;
+  --card-shadow: 0 4px 20px rgba(40, 70, 45, 0.08);
+
+  /* 页面背景图片 */
+  --theme-background-image: none;
+}
+
+/* ---------- 2. 春季主题 ---------- */
+
+:root[data-theme="spring"] {
+  --theme-bg: #f3faf0;
+  --theme-surface: rgba(255, 255, 255, 0.88);
+  --theme-text: #2f3b32;
+  --theme-text-secondary: #718071;
+  --theme-border: #dcebd8;
+  --accent: #5aa56a;
+
+  --theme-background-image: url("/images/themes/spring.png");
+}
+
+/* 临时测试：验证春季主题背景色 */
+html[data-theme="spring"] body {
+  background-color: #f3faf0;
+}
+
+/* ---------- 3. 夏季主题 ---------- */
+
+:root[data-theme="summer"] {
+  --theme-bg: #eef7ff;
+  --theme-surface: rgba(255, 255, 255, 0.88);
+  --theme-text: #263b50;
+  --theme-text-secondary: #71869a;
+  --theme-border: #d5e7f5;
+  --accent: #2f80c0;
+
+  --theme-background-image: url("/images/themes/summer.png");
+}
+
+/* ---------- 4. 秋季主题 ---------- */
+
+:root[data-theme="autumn"] {
+  --theme-bg: #fdf3e7;
+  --theme-surface: rgba(255, 255, 255, 0.88);
+  --theme-text: #493728;
+  --theme-text-secondary: #8d7865;
+  --theme-border: #efddc8;
+  --accent: #c07a2b;
+
+  --theme-background-image: url("/images/themes/autumn.png");
+}
+
+/* ---------- 5. 冬季主题 ---------- */
+
+:root[data-theme="winter"] {
+  --theme-bg: #f2f5f8;
+  --theme-surface: rgba(255, 255, 255, 0.9);
+  --theme-text: #2f3945;
+  --theme-text-secondary: #788795;
+  --theme-border: #dce3ea;
+  --accent: #6b7d8c;
+
+  --theme-background-image: url("/images/themes/winter.png");
+}
+
+/* ---------- 6. 全局页面基础样式 ---------- */
+
+html {
+  min-height: 100%;
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+  font-family: var(--font-ui);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+  font-family: var(--font-ui);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* ---------- 7. 页面背景图片 ---------- */
+
+html {
+  background-color: var(--theme-bg);
+  background-image: var(--theme-background-image);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+body {
+  background-color: transparent;
+  background-image: var(--theme-background-image);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* 确保页面内容正常显示 */
+#app {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* ---------- 8. 诗词文字样式 ---------- */
+
+
+/* ---------- 9. 通用卡片样式 ---------- */
+
+.theme-card {
+  background-color: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+/* ---------- 10. 通用按钮强调色 ---------- */
+
+.theme-accent {
+  color: var(--accent);
+}
+
+/* ---------- 11. 平滑过渡 ---------- */
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+a {
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+/* ---------- 12. 诗词字体切换 ---------- */
+
+/* 注册本地楷书字体：霞鹜文楷屏幕阅读版 */
+@font-face {
+  font-family: "LXGW WenKai Screen";
+  src: url("/fonts/LXGWWenKaiScreen.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 楷书：霞鹜文楷 */
+:root[data-font="kaiti"] {
+  --poem-font: "LXGW WenKai Screen", "KaiTi", "STKaiti", "楷体", serif;
+}
+
+/* 行书：钟齐志莽行书 */
+:root[data-font="xingkai"] {
+  --poem-font: "Zhi Mang Xing", cursive;
+}
+
+/* 诗词标题、正文、作者统一使用当前选定的字体 */
+.poem-title,
+.poem-content,
+.poem-author {
+  font-family: var(--poem-font);
+}
