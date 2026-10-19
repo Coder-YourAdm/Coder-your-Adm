@@ -46,10 +46,6 @@
   --theme-background-image: url("/images/themes/spring.png");
 }
 
-/* 临时测试：验证春季主题背景色 */
-html[data-theme="spring"] body {
-  background-color: #f3faf0;
-}
 
 /* ---------- 3. 夏季主题 ---------- */
 
