@@ -270,7 +270,7 @@
   "theme": "爱情闺怨"
 },
 {
-  "id": "bei-chao-zhang-0011",
+  "id": "beichao-zhang-0011",
   "title": "木兰诗",
   "author": "乐府",
   "dynasty": "北朝",
@@ -318,7 +318,7 @@
   "theme": "其他"
 },
 {
-  "id": "bei-chao-zhang-0012",
+  "id": "beichao-zhang-0012",
   "title": "敕勒歌",
   "author": "乐府",
   "dynasty": "北朝",
@@ -408,7 +408,7 @@
   "theme": "爱情闺怨"
 },
 {
-  "id": "san-guo-zhang-0016",
+  "id": "sanguo-zhang-0016",
   "title": "七步诗",
   "author": "曹植",
   "dynasty": "三国",
@@ -429,7 +429,7 @@
   "theme": "讽喻时弊"
 },
 {
-  "id": "san-guo-zhang-0017",
+  "id": "sanguo-zhang-0017",
   "title": "白马篇",
   "author": "曹植",
   "dynasty": "三国",
@@ -460,7 +460,7 @@
   "theme": "边塞军旅"
 },
 {
-  "id": "san-guo-zhang-0018",
+  "id": "sanguo-zhang-0018",
   "title": "燕歌行",
   "author": "曹丕",
   "dynasty": "三国",
@@ -485,7 +485,7 @@
   "theme": "爱情闺怨"
 },
 {
-  "id": "jin-zhang-0019",
+  "id": "xijin-zhang-0019",
   "title": "咏史（其一）",
   "author": "左思",
   "dynasty": "西晋",
@@ -510,7 +510,7 @@
   "theme": "咏史怀古"
 },
 {
-  "id": "nan-chao-song-zhang-0020",
+  "id": "nanchaosong-zhang-0020",
   "title": "拟行路难（其四）",
   "author": "鲍照",
   "dynasty": "南朝宋",
@@ -531,7 +531,7 @@
   "theme": "哲理人生"
 },
 {
-  "id": "wu-dai-zhang-0021",
+  "id": "wudai-zhang-0021",
   "title": "虞美人·春花秋月何时了",
   "author": "李煜",
   "dynasty": "五代",
@@ -552,7 +552,7 @@
   "theme": "婉约"
 },
 {
-  "id": "wu-dai-zhang-0022",
+  "id": "wudai-zhang-0022",
   "title": "浪淘沙令·帘外雨潺潺",
   "author": "李煜",
   "dynasty": "五代",
@@ -575,7 +575,7 @@
   "theme": "婉约"
 },
 {
-  "id": "wu-dai-zhang-0023",
+  "id": "wudai-zhang-0023",
   "title": "相见欢·无言独上西楼",
   "author": "李煜",
   "dynasty": "五代",
@@ -596,7 +596,7 @@
   "theme": "婉约"
 },
 {
-  "id": "wu-dai-zhang-0024",
+  "id": "wudai-zhang-0024",
   "title": "相见欢·林花谢了春红",
   "author": "李煜",
   "dynasty": "五代",
@@ -617,7 +617,7 @@
   "theme": "婉约"
 },
 {
-  "id": "wu-dai-zhang-0025",
+  "id": "wudai-zhang-0025",
   "title": "破阵子·四十年来家国",
   "author": "李煜",
   "dynasty": "五代",
@@ -640,7 +640,7 @@
   "theme": "婉约"
 },
   {
-    "id": "wu-dai-zhang-0026",
+    "id": "wudai-zhang-0026",
     "title": "清平乐·别来春半",
     "author": "李煜",
     "dynasty": "五代",
@@ -715,7 +715,7 @@
     "theme": "思乡羁旅"
   },
   {
-    "id": "wu-dai-zhang-0029",
+    "id": "wudai-zhang-0029",
     "title": "谒金门·风乍起",
     "author": "冯延巳",
     "dynasty": "五代",
@@ -740,7 +740,7 @@
     "theme": "爱情闺怨"
   },
   {
-    "id": "wu-dai-zhang-0030",
+    "id": "wudai-zhang-0030",
     "title": "鹊踏枝·谁道闲情抛弃久",
     "author": "冯延巳",
     "dynasty": "五代",
