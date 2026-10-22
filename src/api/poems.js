@@ -136,3 +136,89 @@ export function getAllThemes() {
 export function getAllAuthors() {
   return [...new Set(ALL.map(p => p.author))]
 }
+
+/**
+ * 随机获取 n 首诗词（首页「今日推荐」用）
+ * 使用 Fisher-Yates 洗牌，保证同一批内不重复
+ * @param {number} n 需要的数量，默认 8
+ * @returns {Array} 随机诗词数组（不足 n 首时返回全部）
+ */
+export function getRandomPoems(n = 8) {
+  const count = Math.max(0, Math.floor(Number(n) || 0))
+  if (count === 0) return []
+  // 复制一份再洗牌，避免污染全局 ALL 的顺序
+  const pool = [...ALL]
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[pool[i], pool[j]] = [pool[j], pool[i]]
+  }
+  return pool.slice(0, count)
+}
+
+/**
+ * 分页获取诗词（列表页 / 搜索结果页用）
+ * @param {Object} options 分页参数
+ * @param {number} options.page 页码，从 1 开始，默认 1
+ * @param {number} options.size 每页条数，默认 10
+ * @returns {{list: Array, total: number, page: number, size: number, totalPages: number}}
+ */
+export function getPagedPoems({ page = 1, size = 10 } = {}) {
+  const total = ALL.length
+  const pageSize = Math.max(1, Math.floor(Number(size) || 10))
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  // 页码越界时钳制到合法范围，避免返回空列表让页面白屏
+  const current = Math.min(Math.max(1, Math.floor(Number(page) || 1)), totalPages)
+  const start = (current - 1) * pageSize
+  return {
+    list: ALL.slice(start, start + pageSize),
+    total,
+    page: current,
+    size: pageSize,
+    totalPages
+  }
+}
+
+/**
+ * 按作者分组（作者列表页 / 侧边栏用）
+ * @returns {Array<{author: string, count: number, poems: Array}>} 按作品数降序
+ */
+export function groupByAuthor() {
+  const map = new Map()
+  ALL.forEach(p => {
+    const name = p.author || '佚名'
+    if (!map.has(name)) map.set(name, [])
+    map.get(name).push(p)
+  })
+  return [...map.entries()]
+    .map(([author, poems]) => ({ author, count: poems.length, poems }))
+    .sort((a, b) => b.count - a.count || a.author.localeCompare(b.author, 'zh'))
+}
+
+/**
+ * 按「诗句中包含某个字」筛选（飞花令用）
+ * 逐句匹配，命中即认为该首诗词含有此字
+ * @param {string} char 要查的字，如 '月'、'花'
+ * @returns {Array} 正文含该字的诗词数组
+ */
+export function getPoemsByContent(char) {
+  if (!char) return []
+  const target = String(char).trim()
+  if (!target) return []
+  return ALL.filter(p => {
+    const lines = Array.isArray(p.content) ? p.content : [String(p.content || '')]
+    return lines.some(line => String(line || '').includes(target))
+  })
+}
+
+/**
+ * 获取诗词朗读音频路径（详情页朗读按钮用）
+ * 约定音频文件放在 public/audio/ 下，文件名与诗词 id 一致
+ * @param {string} id 诗词 ID，如 'song-xu-0001'
+ * @returns {string} 音频路径，如 'audio/song-xu-0001.mp3'；id 无效时返回空串
+ */
+export function getPoemAudio(id) {
+  if (!id) return ''
+  // 校验 ID 格式，避免拼接出非法路径或 undefined.mp3
+  if (!/^[a-z]+-[a-z]+-\d{4}$/.test(String(id))) return ''
+  return `audio/${id}.mp3`
+}
