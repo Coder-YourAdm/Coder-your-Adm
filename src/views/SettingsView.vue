@@ -1,4 +1,3 @@
-```vue
 <script setup>
 import { useDisplayStore } from '../stores/display'
 
