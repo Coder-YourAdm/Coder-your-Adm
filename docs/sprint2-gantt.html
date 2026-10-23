@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>诗韵·古诗库 Sprint 2 排期甘特图</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#ffffff; --ink:#222; --muted:#6b7280; --line:#e5e7eb;
+    --xu:#2563eb; --liu:#16a34a; --chen:#d97706; --zhang:#db2777; --hong:#7c3aed;
+    --block:#fff;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Microsoft YaHei",-apple-system,"PingFang SC",sans-serif;padding:24px;}
+  h1{font-size:20px;margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:18px;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:13px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:12px;height:12px;border-radius:3px;display:inline-block;}
+  .wrap{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;}
+  table{border-collapse:collapse;width:100%;min-width:760px;}
+  th,td{border:1px solid var(--line);padding:6px;font-size:12.5px;text-align:center;vertical-align:middle;}
+  thead th{background:#f1f5f9;font-weight:600;}
+  .rowhead{background:#f8fafc;font-weight:600;text-align:left;white-space:nowrap;padding-left:10px;}
+  .cell{height:46px;position:relative;}
+  .task{display:inline-block;border-radius:6px;padding:3px 7px;color:#fff;font-size:11.5px;line-height:1.25;
+        box-shadow:0 1px 2px rgba(0,0,0,.12);white-space:nowrap;cursor:default;}
+  .t-xu{background:var(--xu);} .t-liu{background:var(--liu);} .t-chen{background:var(--chen);}
+  .t-zhang{background:var(--zhang);} .t-hong{background:var(--hong);}
+  .blocker{outline:2px solid #ef4444;outline-offset:1px;}
+  .milestone{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;}
+  .ms{flex:1;min-width:200px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:10px 12px;font-size:13px;}
+  .ms b{color:#3730a3;}
+  .note{margin-top:14px;font-size:12.5px;color:var(--muted);}
+</style>
+</head>
+<body>
+  <h1>诗韵·古诗库 — Sprint 2 排期甘特图（10 天）</h1>
+  <div class="sub">目标：做出可演示 MVP，主链路跑通，合 main 打 v0.2 ｜ 红框 = 阻塞点（后面的人要等它合入）</div>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--xu)"></i>徐潇·数据</span>
+    <span><i class="dot" style="background:var(--liu)"></i>刘庭彰·布局</span>
+    <span><i class="dot" style="background:var(--chen)"></i>陈汝桐·页面</span>
+    <span><i class="dot" style="background:var(--zhang)"></i>张雅萱·主题</span>
+    <span><i class="dot" style="background:var(--hong)"></i>洪修睿·核心/联调</span>
+  </div>
+  <div class="wrap">
+    <table>
+      <thead>
+        <tr><th class="rowhead">成员＼天</th>
+          <th>D1</th><th>D2</th><th>D3</th><th>D4</th><th>D5</th><th>D6</th><th>D7</th><th>D8</th><th>D9</th><th>D10</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th class="rowhead">徐潇</th>
+          <td class="cell"><span class="task t-xu blocker" title="DATA-1 规范5人诗词ID（陈汝桐 song-0001→song-chen-0001）">DATA-1 规范ID</span><br><span class="task t-xu" title="DATA-3 写 poem-schema.md">DATA-3 文档</span></td>
+          <td class="cell"><span class="task t-xu" title="DATA-2 扩展 poems.js 5个函数">DATA-2 扩展</span></td>
+          <td class="cell" colspan="8"><span style="color:var(--muted)">数据层完成 ✅ 等待他人联调</span></td>
+        </tr>
+        <tr>
+          <th class="rowhead">刘庭彰</th>
+          <td class="cell"><span style="color:var(--muted)">等徐潇</span></td>
+          <td class="cell"><span class="task t-liu" title="LAY-4 增强 PoemCard（作者/朝代角标/可点）">LAY-4 卡片</span></td>
+          <td class="cell"><span class="task t-liu" title="LAY-1 诗词详情页">LAY-1 详情</span></td>
+          <td class="cell"><span class="task t-liu" title="LAY-2 分类首页">LAY-2 分类</span></td>
+          <td class="cell"><span class="task t-liu" title="LAY-3 游戏中心">LAY-3 游戏</span></td>
+          <td class="cell" colspan="5"><span style="color:var(--muted)">布局完成 ✅</span></td>
+        </tr>
+        <tr>
+          <th class="rowhead">陈汝桐</th>
+          <td class="cell"><span style="color:var(--muted)">等徐潇</span></td>
+          <td class="cell"><span style="color:var(--muted)">等DATA-2</span></td>
+          <td class="cell"><span class="task t-chen" title="VIE-1 首页推荐">VIE-1 首页</span></td>
+          <td class="cell"><span class="task t-chen" title="VIE-2 搜索页">VIE-2 搜索</span></td>
+          <td class="cell"><span class="task t-chen" title="VIE-3 分类列表（依赖LAY-2）">VIE-3 列表</span></td>
+          <td class="cell"><span style="color:var(--muted)">联调准备</span></td>
+          <td class="cell"><span class="task t-chen" title="VIE-4 个人中心（依赖CORE-1/2）">VIE-4 我的</span></td>
+          <td class="cell" colspan="3"><span style="color:var(--muted)">页面完成 ✅</span></td>
+        </tr>
+        <tr>
+          <th class="rowhead">张雅萱</th>
+          <td class="cell"><span class="task t-zhang blocker" title="THM-0 rebase并合并 feature/assets，解决 App.vue/style.css 冲突（保留AppLayout+加useDisplayStore）">THM-0 合并素材</span></td>
+          <td class="cell"><span style="color:var(--muted)">等THM-0</span></td>
+          <td class="cell"><span style="color:var(--muted)">等THM-0</span></td>
+          <td class="cell"><span style="color:var(--muted)">等THM-0</span></td>
+          <td class="cell"><span class="task t-zhang" title="THM-1/2/3 主题接入+背景+设置页">THM-1/2/3 主题</span></td>
+          <td class="cell"><span style="color:var(--muted)">主题打磨</span></td>
+          <td class="cell"><span style="color:var(--muted)">—</span></td>
+          <td class="cell"><span class="task t-zhang" title="THM-4 朗读音频接入详情页（依赖LAY-1）">THM-4 音频</span></td>
+          <td class="cell" colspan="2"><span style="color:var(--muted)">素材完成 ✅</span></td>
+        </tr>
+        <tr>
+          <th class="rowhead">洪修睿</th>
+          <td class="cell"><span class="task t-hong" title="CORE-1 用户store">CORE-1 用户</span><br><span class="task t-hong" title="CORE-2 收藏store">CORE-2 收藏</span></td>
+          <td class="cell"><span style="color:var(--muted)">等DATA-2</span></td>
+          <td class="cell"><span style="color:var(--muted)">等DATA-2</span></td>
+          <td class="cell"><span style="color:var(--muted)">—</span></td>
+          <td class="cell"><span class="task t-hong" title="CORE-3 登录页（依赖CORE-1）">CORE-3 登录</span></td>
+          <td class="cell"><span class="task t-hong" title="CORE-4 飞花令">CORE-4 飞花</span><br><span class="task t-hong" title="CORE-5 填空">CORE-5 填空</span></td>
+          <td class="cell"><span style="color:var(--muted)">—</span></td>
+          <td class="cell" colspan="3"><span class="task t-hong" title="CORE-6 联调+收藏接入+合main打v0.2">CORE-6 联调·发布</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="milestone">
+    <div class="ms"><b>D4 末 · 能看</b><br>首页/分类/详情显示真实诗词；poems.js 控制台无 ID 冲突告警</div>
+    <div class="ms"><b>D7 末 · 能用</b><br>搜索、飞花令、填空、登录/我的 功能可用</div>
+    <div class="ms"><b>D10 末 · 发布</b><br>主题+音频+收藏全链路通；build 通过；合 main 打 v0.2</div>
+  </div>
+
+  <div class="note">悬停色块看任务说明。完整分工见 <code>docs/sprint2-roles.md</code>，机器可执行清单见 <code>docs/sprint2-tasks.json</code>。</div>
+</body>
+</html>
