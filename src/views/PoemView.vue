@@ -1,234 +1,254 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getPoemById, getPoemAudio } from '@/api/poems'
-import { useFavoritesStore } from '@/stores/favorites'
+import { computed, ref, watch } from 'vue'
+import { useRoute, RouterLink } from 'vue-router'
+import { getPoemAudio, getPoemById } from '../api/poems'
+import { useFavoritesStore } from '../stores/favorites'
 
 const route = useRoute()
-const router = useRouter()
 const favorites = useFavoritesStore()
+const poem = computed(() => getPoemById(String(route.params.id || '')))
+const audioUnavailable = ref(false)
+const isFavorite = computed(() => poem.value ? favorites.has(poem.value.id) : false)
 
-const poem = computed(() => getPoemById(route.params.id))
-const audioSrc = computed(() => (poem.value ? getPoemAudio(poem.value.id) : ''))
-const audioMissing = ref(false)
-const audioEl = ref(null)
-
-const isFav = computed(() =>
-  poem.value ? favorites.has(poem.value.id) : false,
-)
-
-// 可选长文区块：字段为空则不渲染
-const blocks = computed(() => {
-  if (!poem.value) return []
-  const p = poem.value
-  return [
-    { key: 'translation', label: '译文', value: p.translation },
-    { key: 'notes', label: '注释', value: p.notes },
-    { key: 'background', label: '创作背景', value: p.background },
-    { key: 'analysis', label: '赏析', value: p.analysis },
-    { key: 'appreciation', label: '鉴赏', value: p.appreciation },
-    { key: 'artisticConcept', label: '艺术特色', value: p.artisticConcept },
-  ].filter((b) => b.value && String(b.value).trim())
+const poemLines = computed(() => {
+  const content = poem.value?.content
+  if (Array.isArray(content)) return content.filter((line) => String(line).trim())
+  if (typeof content === 'string') return content.split(/\r?\n/).filter((line) => line.trim())
+  return []
 })
 
-function toggleFav() {
-  if (poem.value) favorites.toggle(poem.value.id)
+const detailSections = computed(() => {
+  if (!poem.value) return []
+  return [
+    { key: 'translation', title: '译文' },
+    { key: 'notes', title: '注释' },
+    { key: 'background', title: '创作背景' },
+    { key: 'analysis', title: '作品赏析' },
+    { key: 'appreciation', title: '艺术赏析' },
+    { key: 'artisticConcept', title: '意境解读' },
+  ].filter(({ key }) => hasContent(poem.value[key]))
+})
+
+const audioSrc = computed(() => {
+  if (!poem.value) return ''
+  const path = getPoemAudio(poem.value.id)
+  return path ? `${import.meta.env.BASE_URL}${path}` : ''
+})
+
+watch(
+  () => route.params.id,
+  () => {
+    audioUnavailable.value = false
+  },
+)
+
+function hasContent(value) {
+  if (Array.isArray(value)) return value.some((item) => String(item).trim())
+  return typeof value === 'string' && Boolean(value.trim())
 }
 
-function playAudio() {
-  audioMissing.value = false
-  const el = audioEl.value
-  if (!el) return
-  el.play().catch(() => {
-    audioMissing.value = true
-  })
+function readableText(value) {
+  return Array.isArray(value) ? value.join('\n') : value
+}
+
+function toggleFavorite() {
+  if (poem.value) favorites.toggle(poem.value.id)
 }
 </script>
 
 <template>
-  <main v-if="poem" class="poem-page">
-    <button class="back-btn" type="button" @click="router.back()">‹ 返回</button>
+  <article v-if="poem" class="poem-detail">
+    <RouterLink class="back-link" :to="{ name: 'home' }">返回首页</RouterLink>
 
-    <header class="poem-head">
-      <h1 class="poem-title">{{ poem.title }}</h1>
+    <header class="poem-header">
+      <p class="eyebrow">诗词详情</p>
+      <h1>{{ poem.title }}</h1>
       <div class="poem-meta">
-        <span class="badge">{{ poem.dynasty }}</span>
-        <span class="poem-author">{{ poem.author }}</span>
-        <span v-if="poem.form" class="badge outline">{{ poem.form }}</span>
+        <span v-if="poem.author">{{ poem.author }}</span>
+        <span v-if="poem.dynasty" class="meta-badge">{{ poem.dynasty }}</span>
+        <span v-if="poem.form" class="meta-badge">{{ poem.form }}</span>
       </div>
-
-      <div class="poem-actions">
-        <button class="act-btn" type="button" @click="playAudio">🔊 朗读</button>
-        <button
-          class="act-btn"
-          :class="{ active: isFav }"
-          type="button"
-          @click="toggleFav"
-        >
-          {{ isFav ? '★ 已收藏' : '☆ 收藏' }}
-        </button>
+      <div v-if="hasContent(poem.theme) || (Array.isArray(poem.tags) && poem.tags.length)" class="poem-tags">
+        <span v-if="hasContent(poem.theme)" class="poem-tag">{{ poem.theme }}</span>
+        <span v-for="tag in poem.tags" :key="tag" class="poem-tag">{{ tag }}</span>
       </div>
-      <audio
-        ref="audioEl"
-        :src="audioSrc"
-        preload="none"
-        hidden
-        @error="audioMissing = true"
-      ></audio>
-      <p v-if="audioMissing" class="audio-tip">暂无朗读音频</p>
+      <button
+        class="favorite-button"
+        :class="{ active: isFavorite }"
+        type="button"
+        :aria-pressed="isFavorite"
+        @click="toggleFavorite"
+      >
+        {{ isFavorite ? '★ 已收藏' : '☆ 收藏' }}
+      </button>
     </header>
 
-    <section class="poem-content">
-      <p v-for="(line, i) in poem.content" :key="i" class="poem-line">{{ line }}</p>
+    <section class="poem-body" aria-label="诗词正文">
+      <p v-for="(line, index) in poemLines" :key="index">{{ line }}</p>
+      <p v-if="!poemLines.length" class="muted">暂无正文内容</p>
     </section>
 
-    <div v-if="poem.tags && poem.tags.length" class="poem-tags">
-      <span v-for="t in poem.tags" :key="t" class="poem-tag">{{ t }}</span>
-    </div>
+    <section v-if="audioSrc && !audioUnavailable" class="audio-section" aria-label="诗词朗读">
+      <h2>诗词朗读</h2>
+      <audio controls preload="none" :src="audioSrc" @error="audioUnavailable = true">
+        您的浏览器不支持音频播放。
+      </audio>
+    </section>
+    <p v-else class="audio-unavailable" role="status">暂无朗读音频</p>
 
-    <section v-for="b in blocks" :key="b.key" class="poem-block">
-      <details open>
-        <summary>{{ b.label }}</summary>
-        <p class="block-text">{{ b.value }}</p>
+    <section v-if="detailSections.length" class="details-list" aria-label="诗词解读">
+      <details v-for="section in detailSections" :key="section.key" class="detail-section">
+        <summary>{{ section.title }}</summary>
+        <p>{{ readableText(poem[section.key]) }}</p>
       </details>
     </section>
+  </article>
 
-    <p v-if="!blocks.length" class="no-extra">本诗暂无详细注解。</p>
-  </main>
-
-  <main v-else class="poem-empty">
-    <p>未找到该诗词。</p>
-    <RouterLink to="/" class="back-link">返回首页</RouterLink>
-  </main>
+  <section v-else class="not-found" role="status">
+    <p class="eyebrow">未找到诗词</p>
+    <h1>这首诗暂时不在诗库中</h1>
+    <RouterLink class="back-link" :to="{ name: 'home' }">返回首页</RouterLink>
+  </section>
 </template>
 
 <style scoped>
-.poem-page {
-  width: min(100%, 720px);
+.poem-detail,
+.not-found {
+  width: min(100%, 760px);
   margin: 0 auto;
 }
-.back-btn {
-  border: 0;
-  background: transparent;
+
+.back-link {
+  display: inline-flex;
+  margin-bottom: 1.5rem;
   color: var(--accent, #65846c);
-  font: inherit;
   font-size: 0.9rem;
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 1rem;
+  text-decoration: none;
 }
-.poem-head {
-  border-bottom: 1px solid var(--border, rgba(47, 63, 49, 0.12));
-  padding-bottom: 1.2rem;
-  margin-bottom: 1.6rem;
+
+.back-link:hover {
+  text-decoration: underline;
 }
-.poem-title {
-  margin: 0 0 0.8rem;
-  font-family: var(--poem-font, "Songti SC", "SimSun", serif);
-  font-size: 2rem;
-  font-weight: 700;
-}
-.poem-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-.badge {
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  background: var(--accent, #65846c);
-  color: #fff;
-  font-size: 0.78rem;
-}
-.badge.outline {
-  background: transparent;
-  color: var(--accent, #65846c);
-  border: 1px solid var(--accent, #65846c);
-}
-.poem-author {
-  color: var(--accent, #65846c);
-  font-size: 0.95rem;
-}
-.poem-actions {
-  display: flex;
-  gap: 0.6rem;
-  margin-top: 1.2rem;
-}
-.act-btn {
-  padding: 0.6rem 1.1rem;
-  border: 1px solid var(--accent, #65846c);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--accent, #65846c);
-  font: inherit;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 160ms ease;
-}
-.act-btn.active {
-  background: var(--accent, #65846c);
-  color: #fff;
-}
-.audio-tip {
-  margin: 0.6rem 0 0;
-  color: var(--text-secondary, #718071);
-  font-size: 0.85rem;
-}
-.poem-content {
-  font-family: var(--poem-font, "Songti SC", "SimSun", serif);
-}
-.poem-line {
-  margin: 0 0 0.9rem;
-  font-size: 1.25rem;
-  line-height: 1.9;
-  letter-spacing: 0.05em;
-  color: var(--text, #28382e);
+
+.poem-header {
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid color-mix(in srgb, var(--accent, #65846c) 16%, transparent);
+  border-radius: 1.25rem;
+  background: var(--card-surface, #fffefa);
   text-align: center;
 }
+
+.eyebrow {
+  margin: 0 0 0.65rem;
+  color: var(--accent, #65846c);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--poem-font, "Songti SC", "SimSun", serif);
+  font-size: clamp(1.8rem, 5vw, 2.7rem);
+  line-height: 1.45;
+}
+
+.poem-meta,
 .poem-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 1.4rem 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  color: var(--muted, #777b70);
+  font-size: 0.85rem;
 }
-.poem-tag {
-  padding: 0.2rem 0.6rem;
+
+.favorite-button {
+  margin-top: 1rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--accent, #65846c);
   border-radius: 999px;
   color: var(--accent, #65846c);
-  background: rgba(101, 132, 108, 0.1);
-  font-size: 0.75rem;
-}
-.poem-block {
-  margin-bottom: 0.8rem;
-}
-.poem-block details {
-  border: 1px solid var(--border, rgba(47, 63, 49, 0.12));
-  border-radius: 0.8rem;
-  background: var(--card-surface, #fffefa);
-  padding: 0.4rem 1rem;
-}
-.poem-block summary {
+  background: transparent;
   cursor: pointer;
-  font-weight: 600;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.favorite-button.active {
+  color: #fff;
+  background: var(--accent, #65846c);
+}
+
+.meta-badge,
+.poem-tag {
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
   color: var(--accent, #65846c);
-  padding: 0.5rem 0;
+  background: color-mix(in srgb, var(--accent, #65846c) 10%, transparent);
 }
-.block-text {
-  margin: 0.4rem 0 0.8rem;
-  line-height: 1.9;
-  color: var(--text, #28382e);
+
+.poem-body {
+  margin: 1.25rem 0;
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  border-radius: 1.25rem;
+  background: var(--card-surface, #fffefa);
+  font-family: var(--poem-font, "Songti SC", "SimSun", serif);
+  font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+  line-height: 2;
+  text-align: center;
 }
-.no-extra {
-  color: var(--text-secondary, #718071);
+
+.poem-body p {
+  margin: 0.15rem 0;
+}
+
+.muted,
+.audio-unavailable {
+  color: var(--muted, #777b70);
+}
+
+.audio-section,
+.details-list {
+  margin-top: 1.25rem;
+}
+
+.audio-section h2 {
+  margin: 0 0 0.7rem;
+  font-size: 1rem;
+}
+
+.audio-section audio {
+  width: 100%;
+}
+
+.audio-unavailable {
+  margin: 1.25rem 0;
+  padding: 1rem 1.2rem;
+  border-radius: 0.9rem;
+  background: var(--card-surface, #fffefa);
   font-size: 0.9rem;
 }
-.poem-empty {
-  text-align: center;
-  padding: 4rem 1rem;
-  color: var(--text-secondary, #718071);
+
+.detail-section {
+  margin-top: 0.7rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--accent, #65846c) 14%, transparent);
+  border-radius: 0.9rem;
+  background: var(--card-surface, #fffefa);
 }
-.back-link {
-  color: var(--accent, #65846c);
+
+.detail-section summary {
+  color: var(--text, #28382e);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.detail-section p {
+  margin: 0.85rem 0 0;
+  color: var(--text, #28382e);
+  line-height: 1.9;
+  white-space: pre-line;
 }
 </style>

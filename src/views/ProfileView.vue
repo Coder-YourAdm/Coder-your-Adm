@@ -11,9 +11,6 @@ const favorites = useFavoritesStore()
 
 const favList = computed(() => favorites.list)
 
-function goPoem(id) {
-  router.push({ name: 'poem', params: { id } })
-}
 function goLogin() {
   router.push({ name: 'login', query: { redirect: '/profile' } })
 }
@@ -59,7 +56,6 @@ function logout() {
           :dynasty="p.dynasty"
           :excerpt="p.content.join('')"
           :tags="p.tags || []"
-          @open="goPoem"
         />
       </div>
       <p v-else class="fav-empty">
