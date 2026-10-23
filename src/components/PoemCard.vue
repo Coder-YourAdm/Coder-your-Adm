@@ -1,4 +1,6 @@
 <script setup>
+import { RouterLink } from 'vue-router'
+
 defineProps({
   id: {
     type: String,
@@ -30,9 +32,9 @@ const emit = defineEmits(['open'])
 </script>
 
 <template>
-  <button
+  <RouterLink
     class="poem-card"
-    type="button"
+    :to="{ name: 'poem', params: { id } }"
     :aria-label="`查看诗词：${title}`"
     @click="emit('open', id)"
   >
@@ -51,7 +53,7 @@ const emit = defineEmits(['open'])
         <path d="M4 10h11m-4-4 4 4-4 4" />
       </svg>
     </span>
-  </button>
+  </RouterLink>
 </template>
 
 <style scoped>
@@ -69,6 +71,7 @@ const emit = defineEmits(['open'])
   border: 1px solid color-mix(in srgb, var(--card-accent) 16%, transparent);
   border-radius: 1.1rem;
   color: var(--card-text);
+  text-decoration: none;
   background:
     radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--card-accent) 9%, transparent), transparent 60%),
     var(--card-surface, #fffefa);
