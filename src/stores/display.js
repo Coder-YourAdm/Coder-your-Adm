@@ -20,7 +20,7 @@ function loadDisplaySettings() {
         ? saved.theme
         : defaults.theme,
 
-      poemFont: ['kaiti', 'xingkai'].includes(saved.poemFont)
+      poemFont: ['kaiti', 'xingkai', 'lishu'].includes(saved.poemFont)
         ? saved.poemFont
         : defaults.poemFont,
 
@@ -58,6 +58,7 @@ const fontSizes = [
   const fonts = [
     { label: '楷体', value: 'kaiti' },
     { label: '行书', value: 'xingkai' },
+    { label: '隶书', value: 'lishu' },
   ]
 
   // 将主题和字体设置应用到网页
