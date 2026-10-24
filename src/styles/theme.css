@@ -190,3 +190,56 @@ a {
 .poem-author {
   font-family: var(--poem-font);
 }
+
+/* 四季主题背景 */
+html[data-theme='spring'] {
+  --bg: #f3f8ef;
+  --accent: #5aa56a;
+  --text: #28382e;
+  --season-background: url('/images/themes/spring.png');
+}
+
+html[data-theme='summer'] {
+  --bg: #eff7f7;
+  --accent: #438c98;
+  --text: #263b40;
+  --season-background: url('/images/themes/summer.png');
+}
+
+html[data-theme='autumn'] {
+  --bg: #faf2e8;
+  --accent: #b77b43;
+  --text: #49372b;
+  --season-background: url('/images/themes/autumn.png');
+}
+
+html[data-theme='winter'] {
+  --bg: #f0f3f8;
+  --accent: #6886a8;
+  --text: #2f3b4c;
+  --season-background: url('/images/themes/winter.png');
+}
+
+/* 全局诗词字体与字号 */
+html[data-font-size='small'] {
+  --poem-font-size: 18px;
+}
+
+html[data-font-size='medium'] {
+  --poem-font-size: 22px;
+}
+
+html[data-font-size='large'] {
+  --poem-font-size: 26px;
+}
+
+/* 主题背景应用到全局页面 */
+.app-layout {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0.76)),
+    var(--season-background);
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+}

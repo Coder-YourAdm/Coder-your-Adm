@@ -1,13 +1,50 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
+const STORAGE_KEY = 'shiyun-display-settings'
+
+function loadDisplaySettings() {
+  const defaults = {
+    theme: 'spring',
+    poemFont: 'kaiti',
+    fontSize: 'medium',
+  }
+
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) || '{}',
+    )
+
+    return {
+      theme: ['spring', 'summer', 'autumn', 'winter'].includes(saved.theme)
+        ? saved.theme
+        : defaults.theme,
+
+      poemFont: ['kaiti', 'xingkai'].includes(saved.poemFont)
+        ? saved.poemFont
+        : defaults.poemFont,
+
+      fontSize: ['small', 'medium', 'large'].includes(saved.fontSize)
+        ? saved.fontSize
+        : defaults.fontSize,
+    }
+  } catch {
+    return defaults
+  }
+}
+
 // 主题和字体的全局状态管理
 export const useDisplayStore = defineStore('display', () => {
-  // 当前主题，默认使用春季
-  const theme = ref('spring')
+  const savedSettings = loadDisplaySettings()
 
-  // 当前诗词字体，默认使用楷体
-  const poemFont = ref('kaiti')
+const theme = ref(savedSettings.theme)
+const poemFont = ref(savedSettings.poemFont)
+const fontSize = ref(savedSettings.fontSize)
+const fontSizes = [
+  { label: '小', value: 'small', size: '18px' },
+  { label: '标准', value: 'medium', size: '22px' },
+  { label: '大', value: 'large', size: '26px' },
+]
 
   // 支持的四季主题
   const themes = [
@@ -25,14 +62,12 @@ export const useDisplayStore = defineStore('display', () => {
 
   // 将主题和字体设置应用到网页
   function applyDisplaySettings() {
-    if (typeof document === 'undefined') return
+  if (typeof document === 'undefined') return
 
-    // 将当前主题写入 HTML 根元素
-    document.documentElement.dataset.theme = theme.value
-
-    // 将当前字体对应的 CSS 类名写入 HTML 根元素
-    document.documentElement.dataset.font = poemFont.value
-  }
+  document.documentElement.dataset.theme = theme.value
+  document.documentElement.dataset.font = poemFont.value
+  document.documentElement.dataset.fontSize = fontSize.value
+}
 
   // 切换主题
   function setTheme(value) {
@@ -58,20 +93,49 @@ export const useDisplayStore = defineStore('display', () => {
     poemFont.value = value
   }
 
+  function setFontSize(value) {
+  const isValid = fontSizes.some((item) => item.value === value)
+
+  if (!isValid) {
+    console.warn(`暂不支持字号：${value}`)
+    return
+  }
+
+  fontSize.value = value
+}
+
   // 状态变化后，自动更新网页
   watch(
-    [theme, poemFont],
-    applyDisplaySettings,
-    { immediate: true },
-  )
+  [theme, poemFont, fontSize],
+  () => {
+    applyDisplaySettings()
+
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          theme: theme.value,
+          poemFont: poemFont.value,
+          fontSize: fontSize.value,
+        }),
+      )
+    } catch (error) {
+      console.warn('设置保存失败：', error)
+    }
+  },
+  { immediate: true },
+)
 
   return {
-    theme,
-    poemFont,
-    themes,
-    fonts,
-    setTheme,
-    setPoemFont,
-    applyDisplaySettings,
-  }
+  theme,
+  poemFont,
+  fontSize,
+  fontSizes,
+  themes,
+  fonts,
+  setTheme,
+  setPoemFont,
+  applyDisplaySettings,
+  setFontSize,
+}
 })

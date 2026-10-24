@@ -195,7 +195,7 @@ h1 {
   border-radius: 1.25rem;
   background: var(--card-surface, #fffefa);
   font-family: var(--poem-font, "Songti SC", "SimSun", serif);
-  font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+  font-size: var(--poem-font-size, 22px);
   line-height: 2;
   text-align: center;
 }

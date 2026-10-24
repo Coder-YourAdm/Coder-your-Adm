@@ -1,9 +1,11 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useDisplayStore } from '../stores/display'
 
 const route = useRoute()
 const router = useRouter()
+const displayStore = useDisplayStore()
 const searchQuery = ref(typeof route.query.q === 'string' ? route.query.q : '')
 
 const tabs = [
@@ -33,7 +35,12 @@ function submitSearch() {
 </script>
 
 <template>
-  <div class="app-layout">
+  <div
+    class="app-layout"
+    :data-theme="displayStore.theme"
+    :data-font="displayStore.poemFont"
+    :data-font-size="displayStore.fontSize"
+  >
     <header class="site-header">
       <RouterLink class="brand" to="/" aria-label="诗韵首页">
         <span class="brand-mark" aria-hidden="true">韵</span>
