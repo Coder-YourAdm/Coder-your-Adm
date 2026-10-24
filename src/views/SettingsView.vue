@@ -61,10 +61,85 @@ const displayStore = useDisplayStore()
         <p class="preview-author">—— 孟浩然《春晓》</p>
       </div>
     </section>
+    <section class="setting-card">
+  <div class="setting-info">
+    <h2>阅读字号</h2>
+    <p>调整诗词文字大小，找到舒适的阅读体验。</p>
+  </div>
+
+  <div class="option-list">
+    <button
+      v-for="item in displayStore.fontSizes"
+      :key="item.value"
+      type="button"
+      class="option-button"
+      :class="{ active: displayStore.fontSize === item.value }"
+      :aria-pressed="displayStore.fontSize === item.value"
+      @click="displayStore.setFontSize(item.value)"
+    >
+      <span>{{ item.label }}</span>
+      <span
+        v-if="displayStore.fontSize === item.value"
+        class="check-mark"
+      >
+        ✓
+      </span>
+    </button>
+  </div>
+
+  <div class="size-preview">
+    <p class="size-preview-label">字号预览</p>
+    <p class="size-preview-poem">
+      床前明月光，疑是地上霜。
+    </p>
+    <p class="size-preview-author">——李白《静夜思》</p>
+  </div>
+</section>
   </main>
 </template>
 
 <style scoped>
+/* 阅读字号预览 */
+.size-preview {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 24px;
+  padding: 24px 28px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.42);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.size-preview-label {
+  margin: 0;
+  color: var(--theme-text-secondary, #9b8877);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+.size-preview-poem {
+  max-width: 100%;
+  margin: 0;
+  text-align: center;
+  color: var(--text, #49372b);
+  font-family: var(--poem-font, inherit);
+  font-size: var(--poem-font-size, 22px);
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+  transition: font-size 0.2s ease;
+}
+
+.size-preview-author {
+  width: 100%;
+  margin: 0;
+  text-align: right;
+  color: var(--theme-text-secondary, #9b8877);
+  font-size: 15px;
+}
+
 .settings-page {
   width: 100%;
   max-width: 760px;
