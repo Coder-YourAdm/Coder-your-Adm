@@ -140,9 +140,49 @@ function submitSearch() {
   flex-direction: column;
   min-height: 100svh;
   color: var(--layout-text);
+  background: transparent;
+  position: relative;
+  isolation: isolate;
+}
+
+/* 中间雾面背景：边缘渐隐，内容保持清晰 */
+.app-layout::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
   background:
-    radial-gradient(ellipse at 82% 0%, rgba(213, 225, 202, 0.22), transparent 38rem),
-    var(--bg, #f7f7f2);
+    radial-gradient(
+      ellipse at 82% 0%,
+      rgba(213, 225, 202, 0.2),
+      transparent 38rem
+    ),
+    color-mix(
+      in srgb,
+      var(--bg, #f7f7f2) 58%,
+      transparent
+    );
+
+  -webkit-backdrop-filter: blur(10px) saturate(108%);
+  backdrop-filter: blur(10px) saturate(108%);
+
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
+
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
 }
 
 .site-header {
