@@ -2,11 +2,32 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplayStore } from '../stores/display'
+import { getRandomPoems } from '../api/poems'
 
 const route = useRoute()
 const router = useRouter()
 const displayStore = useDisplayStore()
-const searchQuery = ref(typeof route.query.q === 'string' ? route.query.q : '')
+
+// 注意：搜索结果页 SearchView 读取的是 route.query.kw，
+// 参数名必须统一为 kw（此前误用 q 导致顶栏搜索永远查不到结果）
+const searchQuery = ref(typeof route.query.kw === 'string' ? route.query.kw : '')
+const showSuggestions = ref(false)
+let hideTimer = null
+
+// 推荐搜索：每次进入应用随机取 5 条名句作为搜索建议
+const suggestions = ref([])
+function buildSuggestions() {
+  suggestions.value = getRandomPoems(5).map((p) => {
+    const raw = (p.content && p.content[0]) || p.title
+    return {
+      id: p.id,
+      query: raw,
+      display: raw.length > 16 ? `${raw.slice(0, 16)}…` : raw,
+      hint: `${p.dynasty}·${p.author}`,
+    }
+  })
+}
+buildSuggestions()
 
 const tabs = [
   { label: '首页', to: '/', icon: 'home' },
@@ -16,7 +37,7 @@ const tabs = [
 ]
 
 watch(
-  () => route.query.q,
+  () => route.query.kw,
   (query) => {
     searchQuery.value = typeof query === 'string' ? query : ''
   },
@@ -27,10 +48,27 @@ function isActive(path) {
 }
 
 function submitSearch() {
-  router.push({
-    path: '/search',
-    query: { q: searchQuery.value.trim() },
-  })
+  const kw = searchQuery.value.trim()
+  if (!kw) return
+  showSuggestions.value = false
+  router.push({ path: '/search', query: { kw } })
+}
+
+function onSearchFocus() {
+  clearTimeout(hideTimer)
+  showSuggestions.value = true
+}
+
+function onSearchBlur() {
+  // 延迟收起，给建议项的 mousedown 留出触发时间
+  hideTimer = setTimeout(() => {
+    showSuggestions.value = false
+  }, 150)
+}
+
+function applySuggestion(item) {
+  searchQuery.value = item.query
+  submitSearch()
 }
 </script>
 
@@ -65,8 +103,26 @@ function submitSearch() {
           type="search"
           aria-label="搜索诗词、作者或名句"
           placeholder="搜索诗词、作者或名句"
+          @focus="onSearchFocus"
+          @blur="onSearchBlur"
         />
         <button class="search-submit" type="submit">搜索</button>
+
+        <div v-if="showSuggestions && suggestions.length" class="search-suggestions">
+          <p class="suggestions-title">推荐搜索</p>
+          <ul>
+            <li v-for="item in suggestions" :key="item.id">
+              <button
+                type="button"
+                class="suggestion-item"
+                @mousedown.prevent="applySuggestion(item)"
+              >
+                <span class="suggestion-text">{{ item.display }}</span>
+                <span class="suggestion-hint">{{ item.hint }}</span>
+              </button>
+            </li>
+          </ul>
+        </div>
       </form>
     </header>
 
@@ -194,6 +250,9 @@ function submitSearch() {
   margin: 0 auto;
   padding: 1.35rem 0;
   border-bottom: 1px solid var(--layout-border);
+  /* 保证搜索建议下拉能盖住下方页面内容 */
+  position: relative;
+  z-index: 5;
 }
 
 .brand {
@@ -246,6 +305,69 @@ function submitSearch() {
   border-radius: 999px;
   background: color-mix(in srgb, var(--layout-surface) 85%, transparent);
   transition: border-color 160ms ease, box-shadow 160ms ease;
+  position: relative;
+}
+
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.55rem 0.4rem 0.4rem;
+  border: 1px solid var(--layout-border);
+  border-radius: 0.9rem;
+  background: var(--layout-surface, #fffefa);
+  box-shadow: 0 10px 28px rgba(47, 63, 49, 0.16);
+  z-index: 30;
+}
+
+.suggestions-title {
+  margin: 0 0 0.3rem;
+  padding: 0 0.7rem;
+  color: var(--layout-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+.search-suggestions ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--layout-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.suggestion-item:hover {
+  background: color-mix(in srgb, var(--layout-accent) 10%, transparent);
+}
+
+.suggestion-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestion-hint {
+  flex: 0 0 auto;
+  color: var(--layout-muted);
+  font-size: 0.72rem;
 }
 
 .search-form:focus-within {
