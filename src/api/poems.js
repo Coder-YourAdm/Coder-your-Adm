@@ -138,6 +138,41 @@ export function getAllAuthors() {
 }
 
 /**
+ * 获取所有体裁列表（去重）
+ * 过滤空值，避免空 form 的数据在导航页渲染出空白卡片
+ * @returns {Array<string>} 体裁数组，如 ['诗', '词', '曲', '乐府', '赋', '楚辞']
+ */
+export function getAllForms() {
+  return [...new Set(ALL.map(p => p.form))].filter(
+    (v) => typeof v === 'string' && v.trim(),
+  )
+}
+
+/**
+ * 多维度组合筛选（朝代 + 体裁 + 主题 + 作者，条件之间取「且」）
+ * S3-T14 导航页用：支持任意维度叠加，空值条件自动忽略
+ * @param {{dynasty?: string, form?: string, theme?: string, author?: string}} filters
+ * @returns {Array} 同时满足所有非空条件的诗词列表
+ */
+export function getPoemsByFilters(filters = {}) {
+  const { dynasty = '', form = '', theme = '', author = '' } = filters
+  // 统一转字符串并去空格：条件可能来自 URL query，类型和首尾空白都不可信
+  const clean = (v) => String(v ?? '').trim()
+  const d = clean(dynasty)
+  const f = clean(form)
+  const t = clean(theme)
+  const a = clean(author)
+
+  return ALL.filter((p) => {
+    if (d && p.dynasty !== d) return false
+    if (f && p.form !== f) return false
+    if (t && p.theme !== t) return false
+    if (a && p.author !== a) return false
+    return true
+  })
+}
+
+/**
  * 随机获取 n 首诗词（首页「今日推荐」用）
  * 使用 Fisher-Yates 洗牌，保证同一批内不重复
  * @param {number} n 需要的数量，默认 8

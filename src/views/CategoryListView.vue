@@ -1,14 +1,33 @@
 <template>
   <div class="category-page">
     <div class="header">
-      <h2>{{ title }}：<span class="highlight">{{ value }}</span></h2>
+      <h2>
+        <template v-if="chips.length">
+          <span
+            v-for="chip in chips"
+            :key="chip.key"
+            class="chip"
+          >
+            {{ chip.label }}：<span class="highlight">{{ chip.value }}</span>
+            <button
+              class="chip-remove"
+              type="button"
+              :aria-label="`移除${chip.label}条件`"
+              @click="removeChip(chip.key)"
+            >
+              ×
+            </button>
+          </span>
+        </template>
+        <template v-else>全部分类</template>
+      </h2>
       <p>共 {{ total }} 首</p>
     </div>
 
     <!-- 诗词列表区 -->
     <div v-if="poems.length > 0" class="poem-grid">
-      <PoemCard 
-        v-for="poem in poems" 
+      <PoemCard
+        v-for="poem in poems"
         :key="poem.id"
         :id="poem.id"
         :title="poem.title"
@@ -34,62 +53,77 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-// 引入徐潇写的分页函数和分类筛选函数
-import { getPagedPoems, getByDynasty, getByTheme, getByAuthor } from '@/api/poems'
+import { getPoemsByFilters } from '@/api/poems'
 import PoemCard from '@/components/PoemCard.vue'
 
 const route = useRoute()
 const router = useRouter()
 
-// 变量定义
-const poems = ref([])
-const total = ref(0)
-const totalPages = ref(0)
+const pageSize = 9 // 每页 9 首，三列网格下正好 3 行
 const currentPage = ref(Number(route.query.page) || 1)
-const pageSize = 9// 每页 10 首
 
-const title = ref('分类')
-const value = ref('')
+const LABELS = { dynasty: '朝代', form: '体裁', theme: '主题', author: '作者' }
 
-// 核心逻辑：获取数据
-const fetchData = () => {
-  const type = route.params.type // 比如 'dynasty', 'theme', 'author'
-  value.value = route.query.value || '' // 比如 '唐', '婉约', '李白'
+// 同时兼容两种链接形式：
+//   新版（组合筛选）：/category/all?dynasty=唐&form=诗
+//   旧版（单维度）  ：/category/dynasty?value=唐
+const filters = computed(() => {
+  const q = route.query
+  const legacyType = route.params.type === 'all' ? '' : String(route.params.type ?? '')
+  const pick = (key) =>
+    String(q[key] ?? '').trim() || (legacyType === key ? String(q.value ?? '').trim() : '')
 
-  // 1. 先根据分类拿到所有符合条件的数据
-  let allFiltered = []
-  if (type === 'dynasty') {
-    title.value = '朝代'
-    allFiltered = getByDynasty(value.value)
-  } else if (type === 'theme') {
-    title.value = '主题'
-    allFiltered = getByTheme(value.value)
-  } else if (type === 'author') {
-    title.value = '作者'
-    allFiltered = getByAuthor(value.value)
+  return {
+    dynasty: pick('dynasty'),
+    form: pick('form'),
+    theme: pick('theme'),
+    author: pick('author'),
   }
+})
 
-  // 2. 手动做本地分页（因为徐潇的 getPagedPoems 是针对全部数据的，这里我们根据分类结果自己切）
-  total.value = allFiltered.length
-  totalPages.value = Math.ceil(total.value / pageSize)
-  
-  const start = (currentPage.value - 1) * pageSize
-  const end = start + pageSize
-  poems.value = allFiltered.slice(start, end)
-}
+const chips = computed(() =>
+  Object.entries(filters.value)
+    .filter(([, value]) => value)
+    .map(([key, value]) => ({ key, label: LABELS[key], value })),
+)
 
-// 翻页逻辑
-const changePage = (page) => {
+const allFiltered = computed(() => getPoemsByFilters(filters.value))
+const total = computed(() => allFiltered.value.length)
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+
+const poems = computed(() => {
+  // 页码越界时钳回合法范围，避免手动改 URL 出现空白列表
+  const page = Math.min(Math.max(currentPage.value, 1), totalPages.value)
+  const start = (page - 1) * pageSize
+  return allFiltered.value.slice(start, start + pageSize)
+})
+
+// URL 变化或结果集大小变化时，同步并校正当前页码
+watch(
+  [() => route.fullPath, totalPages],
+  () => {
+    const page = Number(route.query.page) || 1
+    currentPage.value = Math.min(Math.max(page, 1), totalPages.value)
+  },
+  { immediate: true },
+)
+
+function changePage(page) {
   if (page < 1 || page > totalPages.value) return
-  currentPage.value = page
-  // 把页码同步到网址上，方便刷新
   router.push({ query: { ...route.query, page } })
-  fetchData()
 }
 
-onMounted(fetchData)
+// 移除某个筛选条件，保留其余条件并回到第 1 页
+function removeChip(key) {
+  const query = { ...route.query }
+  delete query[key]
+  delete query.page
+  // 旧式链接的条件挂在 value 上，需要一并清掉
+  if (route.params.type === key) delete query.value
+  router.push({ params: route.params, query })
+}
 </script>
 
 <style scoped>
@@ -103,9 +137,37 @@ onMounted(fetchData)
   border-bottom: 1px solid #eee;
   padding-bottom: 10px;
 }
+.header h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
 .highlight {
   color: #5aa56a;
   font-weight: bold;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid #d8e4da;
+  border-radius: 999px;
+  background: #f4f8f4;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+.chip-remove {
+  border: none;
+  background: transparent;
+  color: #8a9088;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.chip-remove:hover {
+  color: #5aa56a;
 }
 .poem-grid {
   display: grid;
