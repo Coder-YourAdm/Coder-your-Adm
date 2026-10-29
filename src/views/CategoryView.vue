@@ -23,7 +23,8 @@ const filters = ref({ dynasty: '', form: '', theme: '' })
 
 const hasFilter = computed(() => DIMENSIONS.some((d) => Boolean(filters.value[d.key])))
 
-// 下拉选项按「单维度」统计数量：保证选项列表稳定，不随筛选变化而跳动
+// 下拉选项的数量与卡片组同一套逻辑：在「排除自身维度」的其余条件下统计。
+// 已选「唐」后，体裁下拉显示的就是唐代内部各体裁的数量，随筛选实时联动。
 const options = computed(() =>
   DIMENSIONS.reduce((acc, dim) => {
     const values =
@@ -33,9 +34,12 @@ const options = computed(() =>
           ? getAllForms()
           : getAllThemes()
 
+    const others = { ...filters.value }
+    delete others[dim.key]
+
     acc[dim.key] = values
       .filter((v) => typeof v === 'string' && v.trim())
-      .map((v) => ({ value: v, count: getPoemsByFilters({ [dim.key]: v }).length }))
+      .map((v) => ({ value: v, count: getPoemsByFilters({ ...others, [dim.key]: v }).length }))
       .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value, 'zh'))
     return acc
   }, {}),
