@@ -2,8 +2,8 @@
    诗韵·古诗库
    全局主题与字体样式
    ======================================== */
-  /* 临海隶书：通过 ZeoSeven Fonts API 加载 */
-@import url("https://fontsapi.zeoseven.com/229/main/result.css");
+  /* 临海隶书：本地托管 self-hosted，不再依赖外部 CDN */
+@import "./lishu-font.css";
 /* 行书：钟齐志莽行书，使用本地字体 */
 @font-face {
   font-family: "Zhi Mang Xing";
