@@ -214,11 +214,14 @@ export function getPoemsByContent(char) {
  * 获取诗词朗读音频路径（详情页朗读按钮用）
  * 约定音频文件放在 public/audio/ 下，文件名与诗词 id 一致
  * @param {string} id 诗词 ID，如 'song-xu-0001'
- * @returns {string} 音频路径，如 'audio/song-xu-0001.mp3'；id 无效时返回空串
+ * @returns {string} 音频路径，如 '/audio/song-xu-0001.mp3'（基于 BASE_URL 的绝对路径）；id 无效时返回空串
  */
 export function getPoemAudio(id) {
   if (!id) return ''
   // 校验 ID 格式，避免拼接出非法路径或 undefined.mp3
   if (!/^[a-z]+-[a-z]+-\d{4}$/.test(String(id))) return ''
-  return `audio/${id}.mp3`
+  // 用 BASE_URL 拼绝对路径：history 模式详情页路由是 /poem/:id，
+  // 相对路径会被解析成 /poem/audio/xxx.mp3（被 SPA 回退成 html）而 404，
+  // 绝对路径始终指向站点根目录下的 public/audio/
+  return `${import.meta.env.BASE_URL}audio/${id}.mp3`
 }
