@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplayStore } from '../stores/display'
+import { goAppBack } from '../router'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,6 +33,11 @@ function submitSearch() {
     query: { q: searchQuery.value.trim() },
   })
 }
+
+function handleAppBack() {
+  goAppBack()
+}
+
 </script>
 
 <template>
@@ -71,6 +77,22 @@ function submitSearch() {
     </header>
 
     <main class="page-content">
+      <button
+        v-if="route.meta.showBack"
+        class="app-back"
+        type="button"
+        @click="handleAppBack"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path d="M19 12H5m0 0 7-7m-7 7 7 7" />
+        </svg>
+        <span>返回</span>
+      </button>
+
       <RouterView />
     </main>
 
@@ -289,6 +311,46 @@ function submitSearch() {
 
 .search-submit:hover {
   filter: brightness(0.92);
+}
+
+.app-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 1.25rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--layout-border);
+  border-radius: 999px;
+  color: var(--layout-muted);
+  background: color-mix(in srgb, var(--layout-surface) 75%, transparent);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.app-back svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app-back:hover {
+  color: var(--layout-accent);
+  border-color: color-mix(in srgb, var(--layout-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--layout-accent) 8%, var(--layout-surface));
+}
+
+.app-back:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--layout-accent) 30%, transparent);
+  outline-offset: 3px;
 }
 
 .page-content {
