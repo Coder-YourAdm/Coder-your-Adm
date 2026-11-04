@@ -42,6 +42,13 @@
       <p>暂无收藏，快去探索诗词吧~</p>
     </div>
   </div>
+
+    <!-- 4. 我的学习（背诗卡） -->
+    <div class="study-entry" @click="$router.push('/study')">
+      <h3>📖 我的学习</h3>
+      <p>查看游戏中答错的诗词，背诗卡助你巩固记忆。</p>
+      <span class="entry-arrow">前往学习 ›</span>
+    </div>
 </template>
 
 <script setup>
@@ -65,4 +72,8 @@ const favStore = useFavoritesStore()
 .stat-label { color: #666; font-size: 14px; }
 .poem-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 .empty-state { text-align: center; padding: 40px; background: #fff; border-radius: 12px; color: #999; }
+.study-entry { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-top:20px; padding:20px 24px; background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); cursor:pointer; }
+.study-entry h3 { margin:0; color:#28382e; }
+.study-entry p { margin:4px 0 0; color:#666; font-size:14px; flex:1; }
+.entry-arrow { color:#5aa56a; font-weight:600; }
 </style>

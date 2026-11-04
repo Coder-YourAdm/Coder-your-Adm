@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed, onUnmounted } from 'vue'
 import { getPoemsByContent } from '@/api/poems'
+import { useMistakesStore } from '@/stores/mistakes'
+
+const mistakes = useMistakesStore()
 
 // 飞花令字库（常用且诗词中出现频率高）
 const CHAR_POOL = [
@@ -22,6 +25,13 @@ const timeColor = computed(() =>
   timer.value <= 10 ? '#c0392b' : 'var(--accent, #65846c)',
 )
 
+function recordMiss() {
+  // 答不出时，把本回合参考答案的首首记为薄弱诗词
+  if (references.value.length) {
+    mistakes.add(references.value[0].id, '飞花令')
+  }
+}
+
 function startTimer() {
   clearInterval(timerId)
   timerId = setInterval(() => {
@@ -30,6 +40,7 @@ function startTimer() {
       clearInterval(timerId)
       gameActive.value = false
       feedback.value = `时间到！含「${currentChar.value}」的参考诗句见下方。`
+      recordMiss()
     }
   }, 1000)
 }
