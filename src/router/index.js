@@ -12,6 +12,7 @@ const FillView         = () => import('../views/FillView.vue')
 const ProfileView      = () => import('../views/ProfileView.vue')
 const LoginView        = () => import('../views/LoginView.vue')
 const SettingsView     = () => import('../views/SettingsView.vue')
+const StudyView        = () => import('../views/StudyView.vue')
 
 const routes = [
   { path: '/', name: 'home', component: HomeView },
