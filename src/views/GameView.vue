@@ -18,6 +18,14 @@ const games = [
     symbol: '词',
     action: '开始挑战',
   },
+  {
+    name: 'battle',
+    title: '联网对战',
+    subtitle: '飞花令接力，以诗会友',
+    description: '与 AI 或好友实时飞花令对战，比拼诗词积累。',
+    symbol: '战',
+    action: '开始对战',
+  },
 ]
 </script>
 

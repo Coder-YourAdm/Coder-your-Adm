@@ -13,6 +13,7 @@ const ProfileView      = () => import('../views/ProfileView.vue')
 const LoginView        = () => import('../views/LoginView.vue')
 const SettingsView     = () => import('../views/SettingsView.vue')
 const StudyView        = () => import('../views/StudyView.vue')
+const BattleView       = () => import('../views/BattleView.vue')
 
 const routes = [
   { path: '/', name: 'home', component: HomeView },
@@ -64,6 +65,8 @@ const routes = [
     component: SettingsView,
     meta: { showBack: true, backFallback: '/profile' },
   },
+  { path: '/study', name: 'study', component: StudyView },
+  { path: '/battle', name: 'battle', component: BattleView },
 ]
 
 const router = createRouter({
