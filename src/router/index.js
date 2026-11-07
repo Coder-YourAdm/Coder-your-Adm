@@ -14,6 +14,8 @@ const LoginView        = () => import('../views/LoginView.vue')
 const SettingsView     = () => import('../views/SettingsView.vue')
 const StudyView        = () => import('../views/StudyView.vue')
 const BattleView       = () => import('../views/BattleView.vue')
+const RecitationView   = () => import('../views/RecitationView.vue')
+const PoemMapView      = () => import('../views/PoemMapView.vue')
 
 const routes = [
   { path: '/', name: 'home', component: HomeView },
@@ -49,6 +51,18 @@ const routes = [
     path: '/game/fill',
     name: 'fill',
     component: FillView,
+    meta: { showBack: true, backFallback: '/game' },
+  },
+  {
+    path: '/game/recitation',
+    name: 'recitation',
+    component: RecitationView,
+    meta: { showBack: true, backFallback: '/game' },
+  },
+  {
+    path: '/game/map',
+    name: 'poemMap',
+    component: PoemMapView,
     meta: { showBack: true, backFallback: '/game' },
   },
 
