@@ -26,6 +26,22 @@ const games = [
     symbol: '战',
     action: '开始对战',
   },
+  {
+    name: 'recitation',
+    title: '朗诵打分',
+    subtitle: '开口诵读，听见进步',
+    description: '录下诗句朗诵，用语音识别估算准确度与朗诵节奏。',
+    symbol: '诵',
+    action: '开始朗诵',
+  },
+  {
+    name: 'poemMap',
+    title: '诗词地图',
+    subtitle: '循着诗句，寻访山河',
+    description: '按朝代浏览已标注地点的诗词，点击地图标记查看详情。',
+    symbol: '游',
+    action: '打开地图',
+  },
 ]
 </script>
 
