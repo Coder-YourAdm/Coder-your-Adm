@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import AudioPlayer from '@/components/AudioPlayer.vue'
 import { useDisplayStore } from '../stores/display'
 import { goAppBack } from '../router'
 import { getRandomPoems } from '../api/poems'
@@ -76,10 +77,6 @@ function handleAppBack() {
   goAppBack()
 }
 
-function handleAppBack() {
-  goAppBack()
-}
-
 </script>
 
 <template>
@@ -97,6 +94,8 @@ function handleAppBack() {
           <span class="brand-caption">在诗词里，遇见中国</span>
         </span>
       </RouterLink>
+
+      <AudioPlayer />
 
       <form class="search-form" role="search" @submit.prevent="submitSearch">
         <svg

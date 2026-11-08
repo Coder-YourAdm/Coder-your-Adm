@@ -34,6 +34,15 @@
   "author": "白居易",
   "dynasty": "唐",
   "form": "诗",
+  "location": {
+   "ancientName": "浔阳江",
+   "modernName": "江西省九江市",
+   "latitude": 29.72,
+   "longitude": 115.99,
+   "precision": "approximate",
+   "source": "诗词正文与现有创作背景资料",
+   "note": "地点坐标为九江市附近约略位置，并非精确写作坐标。"
+  },
   "content": [
    "浔阳江头夜送客，",
    "枫叶荻花秋瑟瑟。",
@@ -312,6 +321,15 @@
   "author": "白居易",
   "dynasty": "唐",
   "form": "诗",
+  "location": {
+   "ancientName": "钱塘湖（西湖）",
+   "modernName": "浙江省杭州市",
+   "latitude": 30.25,
+   "longitude": 120.17,
+   "precision": "approximate",
+   "source": "诗词注释与现有创作背景资料",
+   "note": "标记为西湖附近约略坐标，诗中包含多个湖畔地点。"
+  },
   "content": [
    "孤山寺北贾亭西，",
    "水面初平云脚低。",
@@ -392,6 +410,15 @@
   "author": "白居易",
   "dynasty": "唐",
   "form": "诗",
+  "location": {
+   "ancientName": "大林寺",
+   "modernName": "江西省九江市庐山",
+   "latitude": 29.55,
+   "longitude": 115.96,
+   "precision": "approximate",
+   "source": "诗词注释与现有创作背景资料",
+   "note": "标记为庐山大林寺附近约略坐标。"
+  },
   "content": [
    "人间四月芳菲尽，",
    "山寺桃花始盛开。",
@@ -629,6 +656,15 @@
   "author": "杜牧",
   "dynasty": "唐",
   "form": "诗",
+  "location": {
+   "ancientName": "秦淮河（金陵）",
+   "modernName": "江苏省南京市",
+   "latitude": 32.04,
+   "longitude": 118.79,
+   "precision": "approximate",
+   "source": "诗词正文与现有创作背景资料",
+   "note": "标记为秦淮河南京城区段的约略位置。"
+  },
   "content": [
    "烟笼寒水月笼沙，",
    "夜泊秦淮近酒家。",
@@ -1147,6 +1183,15 @@
   "author": "王之涣",
   "dynasty": "唐",
   "form": "诗",
+  "location": {
+   "ancientName": "鹳雀楼（蒲州）",
+   "modernName": "山西省运城市永济市",
+   "latitude": 35.02,
+   "longitude": 110.99,
+   "precision": "approximate",
+   "source": "诗词注释与现有创作背景资料",
+   "note": "标记为今鹳雀楼景区附近的约略坐标。"
+  },
   "content": [
    "白日依山尽，",
    "黄河入海流。",
@@ -1226,6 +1271,15 @@
   "author": "张继",
   "dynasty": "唐",
   "form": "诗",
+  "location": {
+   "ancientName": "枫桥、寒山寺",
+   "modernName": "江苏省苏州市",
+   "latitude": 31.32,
+   "longitude": 120.58,
+   "precision": "approximate",
+   "source": "诗词正文与现有创作背景资料",
+   "note": "标记为枫桥与寒山寺附近约略坐标。"
+  },
   "content": [
    "月落乌啼霜满天，",
    "江枫渔火对愁眠。",
