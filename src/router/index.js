@@ -1,4 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { usePoemHistoryStore } from '../stores/poemHistory'
+
+
 
 // 使用懒加载方式引入页面，加快首屏加载速度
 const HomeView         = () => import('../views/HomeView.vue')
@@ -10,6 +13,8 @@ const GameView         = () => import('../views/GameView.vue')
 const FeihuaView       = () => import('../views/FeihuaView.vue')
 const FillView         = () => import('../views/FillView.vue')
 const ProfileView      = () => import('../views/ProfileView.vue')
+const HistoryView      = () => import('../views/HistoryView.vue')
+const FavoritesView    = () => import('../views/FavoritesView.vue')
 const LoginView        = () => import('../views/LoginView.vue')
 const SettingsView     = () => import('../views/SettingsView.vue')
 const StudyView        = () => import('../views/StudyView.vue')
@@ -68,6 +73,18 @@ const routes = [
 
   { path: '/profile', name: 'profile', component: ProfileView },
   {
+  path: '/history',
+  name: 'history',
+  component: HistoryView,
+  meta: { showBack: true, backFallback: '/profile' },
+},
+{
+  path: '/favorites',
+  name: 'favorites',
+  component: FavoritesView,
+  meta: { showBack: true, backFallback: '/profile' },
+},
+  {
     path: '/login',
     name: 'login',
     component: LoginView,
@@ -79,7 +96,12 @@ const routes = [
     component: SettingsView,
     meta: { showBack: true, backFallback: '/profile' },
   },
-  { path: '/study', name: 'study', component: StudyView },
+  {
+  path: '/study',
+  name: 'study',
+  component: StudyView,
+  meta: { showBack: true, backFallback: '/profile' },
+},
   { path: '/battle', name: 'battle', component: BattleView },
 ]
 
@@ -107,6 +129,12 @@ router.afterEach((to, from, failure) => {
     isAppBackNavigation = false
     isBrowserHistoryNavigation = false
     return
+  }
+
+    // S3-T13：记录成功进入的诗词详情页
+  if (to.name === 'poem') {
+    const historyStore = usePoemHistoryStore()
+    historyStore.recordVisit(String(to.params.id || ''))
   }
 
   // 用户使用浏览器原生前进/后退时，同步内部访问记录
