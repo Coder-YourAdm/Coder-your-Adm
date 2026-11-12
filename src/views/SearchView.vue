@@ -11,12 +11,12 @@
       <PoemCard 
         v-for="poem in poems" 
         :key="poem.id"
+        :id="poem.id"
         :title="poem.title"
         :author="poem.author"
         :dynasty="poem.dynasty"
         :excerpt="poem.content ? poem.content[0] : ''"
         :tags="poem.tags"
-        @open="$router.push('/poem/' + poem.id)"
       />
     </div>
     

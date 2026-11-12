@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { getAllPoems } from '@/api/poems'
+import { useMistakesStore } from '@/stores/mistakes'
+
+const mistakes = useMistakesStore()
 
 // 过滤出有足够内容的诗词作为题库
 const pool = getAllPoems().filter(
@@ -50,6 +53,7 @@ function checkAnswer() {
     feedback.value = '答对啦！'
   } else {
     feedback.value = `正确答案：「${current.value.answer}」`
+    mistakes.add(current.value.poem.id, '诗词填空')
   }
 }
 

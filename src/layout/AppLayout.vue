@@ -1,10 +1,35 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import AudioPlayer from '@/components/AudioPlayer.vue'
+import { useDisplayStore } from '../stores/display'
+import { goAppBack } from '../router'
+import { getRandomPoems } from '../api/poems'
 
 const route = useRoute()
 const router = useRouter()
-const searchQuery = ref(typeof route.query.q === 'string' ? route.query.q : '')
+const displayStore = useDisplayStore()
+
+// 注意：搜索结果页 SearchView 读取的是 route.query.kw，
+// 参数名必须统一为 kw（此前误用 q 导致顶栏搜索永远查不到结果）
+const searchQuery = ref(typeof route.query.kw === 'string' ? route.query.kw : '')
+const showSuggestions = ref(false)
+let hideTimer = null
+
+// 推荐搜索：每次进入应用随机取 5 条名句作为搜索建议
+const suggestions = ref([])
+function buildSuggestions() {
+  suggestions.value = getRandomPoems(5).map((p) => {
+    const raw = (p.content && p.content[0]) || p.title
+    return {
+      id: p.id,
+      query: raw,
+      display: raw.length > 16 ? `${raw.slice(0, 16)}…` : raw,
+      hint: `${p.dynasty}·${p.author}`,
+    }
+  })
+}
+buildSuggestions()
 
 const tabs = [
   { label: '首页', to: '/', icon: 'home' },
@@ -14,7 +39,7 @@ const tabs = [
 ]
 
 watch(
-  () => route.query.q,
+  () => route.query.kw,
   (query) => {
     searchQuery.value = typeof query === 'string' ? query : ''
   },
@@ -25,15 +50,42 @@ function isActive(path) {
 }
 
 function submitSearch() {
-  router.push({
-    path: '/search',
-    query: { q: searchQuery.value.trim() },
-  })
+  const kw = searchQuery.value.trim()
+  if (!kw) return
+  showSuggestions.value = false
+  router.push({ path: '/search', query: { kw } })
 }
+
+function onSearchFocus() {
+  clearTimeout(hideTimer)
+  showSuggestions.value = true
+}
+
+function onSearchBlur() {
+  // 延迟收起，给建议项的 mousedown 留出触发时间
+  hideTimer = setTimeout(() => {
+    showSuggestions.value = false
+  }, 150)
+}
+
+function applySuggestion(item) {
+  searchQuery.value = item.query
+  submitSearch()
+}
+
+function handleAppBack() {
+  goAppBack()
+}
+
 </script>
 
 <template>
-  <div class="app-layout">
+  <div
+    class="app-layout"
+    :data-theme="displayStore.theme"
+    :data-font="displayStore.poemFont"
+    :data-font-size="displayStore.fontSize"
+  >
     <header class="site-header">
       <RouterLink class="brand" to="/" aria-label="诗韵首页">
         <span class="brand-mark" aria-hidden="true">韵</span>
@@ -42,6 +94,8 @@ function submitSearch() {
           <span class="brand-caption">在诗词里，遇见中国</span>
         </span>
       </RouterLink>
+
+      <AudioPlayer />
 
       <form class="search-form" role="search" @submit.prevent="submitSearch">
         <svg
@@ -58,12 +112,46 @@ function submitSearch() {
           type="search"
           aria-label="搜索诗词、作者或名句"
           placeholder="搜索诗词、作者或名句"
+          @focus="onSearchFocus"
+          @blur="onSearchBlur"
         />
         <button class="search-submit" type="submit">搜索</button>
+
+        <div v-if="showSuggestions && suggestions.length" class="search-suggestions">
+          <p class="suggestions-title">推荐搜索</p>
+          <ul>
+            <li v-for="item in suggestions" :key="item.id">
+              <button
+                type="button"
+                class="suggestion-item"
+                @mousedown.prevent="applySuggestion(item)"
+              >
+                <span class="suggestion-text">{{ item.display }}</span>
+                <span class="suggestion-hint">{{ item.hint }}</span>
+              </button>
+            </li>
+          </ul>
+        </div>
       </form>
     </header>
 
     <main class="page-content">
+      <button
+        v-if="route.meta.showBack"
+        class="app-back"
+        type="button"
+        @click="handleAppBack"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path d="M19 12H5m0 0 7-7m-7 7 7 7" />
+        </svg>
+        <span>返回</span>
+      </button>
+
       <RouterView />
     </main>
 
@@ -133,9 +221,49 @@ function submitSearch() {
   flex-direction: column;
   min-height: 100svh;
   color: var(--layout-text);
+  background: transparent;
+  position: relative;
+  isolation: isolate;
+}
+
+/* 中间雾面背景：边缘渐隐，内容保持清晰 */
+.app-layout::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
   background:
-    radial-gradient(ellipse at 82% 0%, rgba(213, 225, 202, 0.22), transparent 38rem),
-    var(--bg, #f7f7f2);
+    radial-gradient(
+      ellipse at 82% 0%,
+      rgba(213, 225, 202, 0.2),
+      transparent 38rem
+    ),
+    color-mix(
+      in srgb,
+      var(--bg, #f7f7f2) 58%,
+      transparent
+    );
+
+  -webkit-backdrop-filter: blur(10px) saturate(108%);
+  backdrop-filter: blur(10px) saturate(108%);
+
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
+
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
 }
 
 .site-header {
@@ -147,6 +275,9 @@ function submitSearch() {
   margin: 0 auto;
   padding: 1.35rem 0;
   border-bottom: 1px solid var(--layout-border);
+  /* 保证搜索建议下拉能盖住下方页面内容 */
+  position: relative;
+  z-index: 5;
 }
 
 .brand {
@@ -199,6 +330,69 @@ function submitSearch() {
   border-radius: 999px;
   background: color-mix(in srgb, var(--layout-surface) 85%, transparent);
   transition: border-color 160ms ease, box-shadow 160ms ease;
+  position: relative;
+}
+
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.55rem 0.4rem 0.4rem;
+  border: 1px solid var(--layout-border);
+  border-radius: 0.9rem;
+  background: var(--layout-surface, #fffefa);
+  box-shadow: 0 10px 28px rgba(47, 63, 49, 0.16);
+  z-index: 30;
+}
+
+.suggestions-title {
+  margin: 0 0 0.3rem;
+  padding: 0 0.7rem;
+  color: var(--layout-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+.search-suggestions ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--layout-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.suggestion-item:hover {
+  background: color-mix(in srgb, var(--layout-accent) 10%, transparent);
+}
+
+.suggestion-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestion-hint {
+  flex: 0 0 auto;
+  color: var(--layout-muted);
+  font-size: 0.72rem;
 }
 
 .search-form:focus-within {
@@ -242,6 +436,46 @@ function submitSearch() {
 
 .search-submit:hover {
   filter: brightness(0.92);
+}
+
+.app-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 1.25rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--layout-border);
+  border-radius: 999px;
+  color: var(--layout-muted);
+  background: color-mix(in srgb, var(--layout-surface) 75%, transparent);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.app-back svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app-back:hover {
+  color: var(--layout-accent);
+  border-color: color-mix(in srgb, var(--layout-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--layout-accent) 8%, var(--layout-surface));
+}
+
+.app-back:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--layout-accent) 30%, transparent);
+  outline-offset: 3px;
 }
 
 .page-content {

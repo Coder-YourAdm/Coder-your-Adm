@@ -1,0 +1,353 @@
+{
+  "project": "诗韵·古诗库",
+  "cycle": "Sprint 2 (MVP)",
+  "duration_days": 10,
+  "base_branch": "develop",
+  "release_branch": "main",
+  "release_tag": "v0.2",
+  "generated_by": "洪修睿",
+  "generated_at": "2026-10-21",
+  "assumptions": [
+    "张雅萱 feature/assets 已 rebase 最新 develop 并解决 App.vue/style.css 冲突后合并到 develop（含 theme.css、stores/display.js、字体、public/images/themes/*.png、public/audio/*.mp3）",
+    "5 人诗词 json 已全部合入 src/data/poems/，ID 遵循 朝代-负责人-0001（陈汝桐 song-0001 已改为 song-chen-0001）",
+    "npm run build 当前通过，无编译阻塞",
+    "诗词字段可为空字符串（徐潇数据多空字段），视图渲染长文区块前必须判空"
+  ],
+  "conventions": {
+    "framework": "Vue 3 + Vite + Vue Router 4 + Pinia",
+    "branch_pattern": "feature/sprint2-<scope>",
+    "commit_prefixes": ["feat:", "fix:", "docs:", "style:", "refactor:"],
+    "data_access_rule": "页面只允许 import src/api/poems.js 的导出函数取数，禁止直接 import json",
+    "store_location": "src/stores/，使用 defineStore，需持久化者用 localStorage 自实现",
+    "review_rule": "PR 到 develop，由另一名成员 review 后合并；main 禁止直推"
+  },
+  "poem_schema": {
+    "required": [
+      {"field": "id", "type": "string", "note": "唯一，格式 朝代-负责人-0001，朝代码 tang/song/yuan，负责人 hong/liu/chen/xu/zhang"},
+      {"field": "title", "type": "string"},
+      {"field": "author", "type": "string"},
+      {"field": "dynasty", "type": "string", "example": "唐/宋/元"},
+      {"field": "form", "type": "string", "example": "诗/词/曲"},
+      {"field": "content", "type": "string[]", "note": "每行一句"},
+      {"field": "theme", "type": "string", "example": "豪放/婉约/思乡羁旅"}
+    ],
+    "optional_may_be_empty": [
+      {"field": "tags", "type": "string[]"},
+      {"field": "translation", "type": "string"},
+      {"field": "notes", "type": "string"},
+      {"field": "background", "type": "string"},
+      {"field": "analysis", "type": "string"},
+      {"field": "appreciation", "type": "string"},
+      {"field": "artisticConcept", "type": "string"}
+    ],
+    "render_rule": "除 required 字段外，其余字段为空字符串或空数组时一律不渲染对应区块"
+  },
+  "routes": [
+    {"path": "/", "name": "home", "file": "src/views/HomeView.vue", "owner": "陈汝桐"},
+    {"path": "/category", "name": "category", "file": "src/views/CategoryView.vue", "owner": "刘庭彰"},
+    {"path": "/category/:type", "name": "categoryList", "file": "src/views/CategoryListView.vue", "owner": "陈汝桐"},
+    {"path": "/poem/:id", "name": "poem", "file": "src/views/PoemView.vue", "owner": "刘庭彰"},
+    {"path": "/search", "name": "search", "file": "src/views/SearchView.vue", "owner": "陈汝桐"},
+    {"path": "/game", "name": "game", "file": "src/views/GameView.vue", "owner": "刘庭彰"},
+    {"path": "/game/feihua", "name": "feihua", "file": "src/views/FeihuaView.vue", "owner": "洪修睿"},
+    {"path": "/game/fill", "name": "fill", "file": "src/views/FillView.vue", "owner": "洪修睿"},
+    {"path": "/profile", "name": "profile", "file": "src/views/ProfileView.vue", "owner": "陈汝桐"},
+    {"path": "/login", "name": "login", "file": "src/views/LoginView.vue", "owner": "洪修睿"},
+    {"path": "/settings", "name": "settings", "file": "src/views/SettingsView.vue", "owner": "张雅萱"}
+  ],
+  "category_list_convention": "CategoryView 跳转用 router.push({ name:'categoryList', params:{type:'dynasty'|'theme'|'author'}, query:{value:'唐'} })；CategoryListView 读 route.params.type + route.query.value 选择查询函数",
+  "milestones": [
+    {"day": 4, "criteria": "首页/分类/详情三页 dev 下显示真实诗词；poems.js 控制台无 ID 冲突告警"},
+    {"day": 7, "criteria": "搜索、飞花令、填空、登录/我的 功能可用"},
+    {"day": 10, "criteria": "主题切换+朗读音频+收藏全链路通；npm run build 通过；合 main 打 v0.2"}
+  ],
+  "tasks": [
+    {
+      "id": "DATA-1",
+      "title": "规范 5 人诗词 ID 命名",
+      "owner": "徐潇",
+      "github": "xvxiao30509899",
+      "branch": "feature/sprint2-data",
+      "depends_on": [],
+      "phase": "A",
+      "files": [{"path": "src/data/poems/*.json", "action": "modify"}],
+      "instructions": "遍历 src/data/poems/ 下所有 json，将每条 id 改为 朝代-负责人-0001 格式（唐=tang，宋=song，元=yuan；负责人 hong/liu/chen/xu/zhang）。重点：陈汝桐 song-0001 → song-chen-0001。确保 5 个 json 合并后 id 全局唯一。",
+      "acceptance": [
+        "npm run dev 控制台无 '[poems] ID 冲突' 告警",
+        "getPoemById 对每个 id 都能唯一命中",
+        "所有 id 匹配正则 ^(tang|song|yuan|han|preqin)-(hong|liu|chen|xu|zhang)-[0-9]{4}$"
+      ]
+    },
+    {
+      "id": "DATA-2",
+      "title": "扩展 poems.js 查询函数",
+      "owner": "徐潇",
+      "github": "xvxiao30509899",
+      "branch": "feature/sprint2-data",
+      "depends_on": ["DATA-1"],
+      "phase": "A",
+      "files": [{"path": "src/api/poems.js", "action": "modify"}],
+      "instructions": "在 poems.js 现有导出基础上新增以下函数并 export：\n1) getRandomPoems(n=10)：从 ALL 随机取 n 条（用于首页推荐）\n2) getPagedPoems({page=1,size=12})：分页返回，支持分类结果分页\n3) groupByAuthor()：返回 [{author, count, poems}] 按作者聚合\n4) getPoemsByContent(char)：返回 ALL 中 content 任意一行包含 char 的条目（飞花令用）\n5) getPoemAudio(id)：返回 'audio/'+id+'.mp3' 路径字符串（文件是否存在由前端判断，函数本身不校验）",
+      "acceptance": [
+        "import { getRandomPoems, getPagedPoems, groupByAuthor, getPoemsByContent, getPoemAudio } from '@/api/poems' 可用",
+        "getRandomPoems(5).length === 5（ALL 足够时）",
+        "getPoemsByContent('月').every(p => p.content.join('').includes('月'))",
+        "getPoemAudio('song-xu-0001') === 'audio/song-xu-0001.mp3'"
+      ]
+    },
+    {
+      "id": "DATA-3",
+      "title": "编写诗词标准字段文档",
+      "owner": "徐潇",
+      "github": "xvxiao30509899",
+      "branch": "feature/sprint2-data",
+      "depends_on": [],
+      "phase": "A",
+      "files": [{"path": "docs/poem-schema.md", "action": "create"}],
+      "instructions": "按 poem_schema 章节定义标准字段、类型、必填/可选、渲染判空规则，并给一个完整示例条目。D2 前合入以便全员对齐。",
+      "acceptance": ["docs/poem-schema.md 存在且包含 id/title/author/dynasty/form/content/theme 及可选字段说明"]
+    },
+    {
+      "id": "LAY-1",
+      "title": "实现诗词详情页 PoemView",
+      "owner": "刘庭彰",
+      "github": "Akirachan86",
+      "branch": "feature/sprint2-layout",
+      "depends_on": ["DATA-1"],
+      "phase": "A",
+      "files": [{"path": "src/views/PoemView.vue", "action": "implement"}],
+      "instructions": "用 route.params.id 调 getPoemById(id) 取诗词。渲染：标题、作者+朝代角标、体裁、theme 标签；content 逐行显示（保留标点排版）；translation/notes/background/analysis/appreciation/artisticConcept 各自成折叠区，字段为空则不渲染该区。提供『朗读』按钮（调用 getPoemAudio(id) 播放 public/audio 下 mp3，文件不存在则提示『暂无朗读音频』）。若未找到显示『未找到该诗词』。",
+      "acceptance": [
+        "访问 /poem/song-xu-0001 能看到标题/作者/朝代/正文",
+        "空字段区块不渲染（用徐潇空数据条目验证）",
+        "朗读按钮点击后无报错（音频缺失有占位提示而非崩溃）"
+      ]
+    },
+    {
+      "id": "LAY-2",
+      "title": "实现分类首页 CategoryView",
+      "owner": "刘庭彰",
+      "github": "Akirachan86",
+      "branch": "feature/sprint2-layout",
+      "depends_on": ["DATA-2"],
+      "phase": "A",
+      "files": [{"path": "src/views/CategoryView.vue", "action": "implement"}],
+      "instructions": "三组入口卡片：①朝代（getAllDynasties()）②主题（getAllThemes()）③作者（getAllAuthors()）。每组以卡片网格展示，点击朝代/主题/作者卡片用 router.push({name:'categoryList', params:{type:'dynasty'|'theme'|'author'}, query:{value}}) 跳转。",
+      "acceptance": [
+        "页面展示朝代/主题/作者三类入口",
+        "点击任一口跳转到 /category/:type?value=xxx 且 CategoryListView 能接收"
+      ]
+    },
+    {
+      "id": "LAY-3",
+      "title": "实现游戏中心 GameView",
+      "owner": "刘庭彰",
+      "github": "Akirachan86",
+      "branch": "feature/sprint2-layout",
+      "depends_on": [],
+      "phase": "B",
+      "files": [{"path": "src/views/GameView.vue", "action": "implement"}],
+      "instructions": "两个入口卡片：『飞花令』→ router.push({name:'feihua'})；『诗词填空』→ router.push({name:'fill'})。卡片风格与 PoemCard/全局主题一致。",
+      "acceptance": ["两个入口可点击跳转对应游戏页"]
+    },
+    {
+      "id": "LAY-4",
+      "title": "增强 PoemCard 组件",
+      "owner": "刘庭彰",
+      "github": "Akirachan86",
+      "branch": "feature/sprint2-layout",
+      "depends_on": [],
+      "phase": "A",
+      "files": [{"path": "src/components/PoemCard.vue", "action": "modify"}],
+      "instructions": "在现有 PoemCard 基础上补充：显示作者、朝代角标；整卡可点击 router-link 到 /poem/:id；保持 scoped 样式与无障碍（focus/hover）处理。",
+      "acceptance": ["PoemCard 显示作者+朝代，点击跳转详情页"]
+    },
+    {
+      "id": "VIE-1",
+      "title": "完善首页 HomeView",
+      "owner": "陈汝桐",
+      "github": "AriaaaCHEN",
+      "branch": "feature/sprint2-views",
+      "depends_on": ["DATA-2"],
+      "phase": "A",
+      "files": [{"path": "src/views/HomeView.vue", "action": "implement"}],
+      "instructions": "顶部品牌/标语；调用 getRandomPoems(8) 展示推荐诗词（用 PoemCard 网格）；提供搜索入口（输入框 + 跳转 /search?kw= 或直接 router.push({name:'search', query:{kw}})）。",
+      "acceptance": ["首页展示 8 首推荐诗词卡片，点击进详情；搜索入口可跳转搜索页"]
+    },
+    {
+      "id": "VIE-2",
+      "title": "实现搜索页 SearchView",
+      "owner": "陈汝桐",
+      "github": "AriaaaCHEN",
+      "branch": "feature/sprint2-views",
+      "depends_on": ["DATA-2"],
+      "phase": "A",
+      "files": [{"path": "src/views/SearchView.vue", "action": "implement"}],
+      "instructions": "读取 route.query.kw（来自首页入口）作为初始值；输入框绑定，输入即调 searchPoems(kw) 实时显示 PoemCard 结果列表；无结果时显示『未找到相关诗词』。",
+      "acceptance": ["输入关键词显示匹配诗词；空结果显示提示；从首页带入 kw 能自动搜"]
+    },
+    {
+      "id": "VIE-3",
+      "title": "实现分类列表 CategoryListView",
+      "owner": "陈汝桐",
+      "github": "AriaaaCHEN",
+      "branch": "feature/sprint2-views",
+      "depends_on": ["LAY-2", "DATA-2"],
+      "phase": "B",
+      "files": [{"path": "src/views/CategoryListView.vue", "action": "implement"}],
+      "instructions": "读取 route.params.type（dynasty|theme|author）与 route.query.value；分别调 getByDynasty/getByTheme/getByAuthor 取列表，用 PoemCard 网格展示并 paginate（用 getPagedPoems 或前端分页）；顶部显示『X：value』标题。",
+      "acceptance": ["/category/dynasty?value=宋 显示宋代诗词；主题/作者同理"]
+    },
+    {
+      "id": "VIE-4",
+      "title": "实现个人中心 ProfileView",
+      "owner": "陈汝桐",
+      "github": "AriaaaCHEN",
+      "branch": "feature/sprint2-views",
+      "depends_on": ["CORE-2", "CORE-1"],
+      "phase": "B",
+      "files": [{"path": "src/views/ProfileView.vue", "action": "implement"}],
+      "instructions": "展示：登录态（user store）→ 已登录显示用户名+退出按钮，未登录显示去登录入口（router.push({name:'login'})）；『我的收藏』列表（读 favorites store 的 ids，用 getPoemById 解析成 PoemCard）；学习统计占位（已学/收藏数量）。",
+      "acceptance": ["未登录显示登录入口；登录后显示用户名与收藏列表；收藏为空有提示"]
+    },
+    {
+      "id": "THM-0",
+      "title": "rebase 并合并 feature/assets（解决冲突）",
+      "owner": "张雅萱",
+      "github": "yaxuanzhang490-cloud",
+      "branch": "feature/assets",
+      "depends_on": [],
+      "phase": "A",
+      "files": [{"path": "src/App.vue", "action": "modify"}, {"path": "src/style.css", "action": "modify"}],
+      "instructions": "将 feature/assets rebase 到最新 develop。解决冲突：src/App.vue 必须保留刘庭彰的 AppLayout 组件，并在此基础上加入 useDisplayStore() 初始化（两者不矛盾）；src/style.css 合并全局样式与主题样式。解决后提 PR 合 develop。",
+      "acceptance": [
+        "合并后 App.vue 同时含 AppLayout 与 display store 初始化",
+        "npm run build 通过，npm run dev 首页有主题背景"
+      ]
+    },
+    {
+      "id": "THM-1",
+      "title": "AppLayout 接入主题 store",
+      "owner": "张雅萱",
+      "github": "yaxuanzhang490-cloud",
+      "branch": "feature/sprint2-theme",
+      "depends_on": ["THM-0"],
+      "phase": "B",
+      "files": [{"path": "src/layout/AppLayout.vue", "action": "modify"}],
+      "instructions": "在 AppLayout 中消费 display store（theme/fontFamily/fontSize），将主题 class 挂到根容器，字体/字号应用到全局。确保主题切换实时生效。",
+      "acceptance": ["切换主题后 AppLayout 根容器 class 与字体/字号随之变化"]
+    },
+    {
+      "id": "THM-2",
+      "title": "背景图随主题切换",
+      "owner": "张雅萱",
+      "github": "yaxuanzhang490-cloud",
+      "branch": "feature/sprint2-theme",
+      "depends_on": ["THM-0"],
+      "phase": "B",
+      "files": [{"path": "src/layout/AppLayout.vue", "action": "modify"}, {"path": "src/styles/theme.css", "action": "modify"}],
+      "instructions": "根据 display store 的 theme（spring/summer/autumn/winter），将 public/images/themes/{season}.png 设为全局背景（铺满、半透明遮罩保证文字可读）。删除 theme.css 中残留的临时测试注释行。",
+      "acceptance": ["四季主题切换时背景图相应变化，文字清晰可读"]
+    },
+    {
+      "id": "THM-3",
+      "title": "设置页 SettingsView（主题/字体/字号）",
+      "owner": "张雅萱",
+      "github": "yaxuanzhang490-cloud",
+      "branch": "feature/sprint2-theme",
+      "depends_on": ["THM-0"],
+      "phase": "B",
+      "files": [{"path": "src/views/SettingsView.vue", "action": "implement"}],
+      "instructions": "UI：四季主题切换按钮（v-for 绑定，高亮当前，aria-pressed 无障碍）、字体选择、字号（小/中/大）调节；均写回 display store 并持久化 localStorage。",
+      "acceptance": ["设置页可切换主题/字体/字号，刷新后保留"]
+    },
+    {
+      "id": "THM-4",
+      "title": "朗读音频接入详情页",
+      "owner": "张雅萱",
+      "github": "yaxuanzhang490-cloud",
+      "branch": "feature/sprint2-theme",
+      "depends_on": ["LAY-1", "DATA-2"],
+      "phase": "C",
+      "files": [{"path": "src/views/PoemView.vue", "action": "modify"}],
+      "instructions": "与刘庭彰协调：PoemView 的朗读按钮使用 getPoemAudio(id) 取得 'audio/'+id+'.mp3'，用 <audio> 播放；文件缺失（HTTP 404）时显示『暂无朗读音频』占位。确保音频路径与 public/audio/ 下文件命名一致（以诗词 id 命名）。",
+      "acceptance": ["详情页朗读按钮能播放存在的音频；缺失音频显示占位而非报错"]
+    },
+    {
+      "id": "CORE-1",
+      "title": "用户登录 store",
+      "owner": "洪修睿",
+      "github": "Coder-YourAdm",
+      "branch": "feature/sprint2-core",
+      "depends_on": [],
+      "phase": "B",
+      "files": [{"path": "src/stores/user.js", "action": "create"}],
+      "instructions": "Pinia store：state { isLoggedIn:false, username:'' }；actions login(username) / logout()；localStorage 持久化（key: shiyun-user）。",
+      "acceptance": ["login('修睿') 后 isLoggedIn=true,username='修睿'；刷新后保留；logout 清空"]
+    },
+    {
+      "id": "CORE-2",
+      "title": "收藏 store",
+      "owner": "洪修睿",
+      "github": "Coder-YourAdm",
+      "branch": "feature/sprint2-core",
+      "depends_on": [],
+      "phase": "B",
+      "files": [{"path": "src/stores/favorites.js", "action": "create"}],
+      "instructions": "Pinia store：state { ids:[] }；actions toggle(id)/has(id)/list()（list 用 getPoemById 解析）；localStorage 持久化（key: shiyun-favorites）。",
+      "acceptance": ["toggle(id) 增删；has(id) 正确；刷新后保留"]
+    },
+    {
+      "id": "CORE-3",
+      "title": "模拟登录页 LoginView",
+      "owner": "洪修睿",
+      "github": "Coder-YourAdm",
+      "branch": "feature/sprint2-core",
+      "depends_on": ["CORE-1"],
+      "phase": "B",
+      "files": [{"path": "src/views/LoginView.vue", "action": "implement"}],
+      "instructions": "输入用户名 → 调 user store.login(username) → 跳回来源页或 /profile。无后端，纯前端模拟。提供『游客浏览』跳过入口。",
+      "acceptance": ["输入用户名登录后跳转个人中心并显示用户名"]
+    },
+    {
+      "id": "CORE-4",
+      "title": "飞花令 FeihuaView",
+      "owner": "洪修睿",
+      "github": "Coder-YourAdm",
+      "branch": "feature/sprint2-core",
+      "depends_on": ["DATA-2"],
+      "phase": "B",
+      "files": [{"path": "src/views/FeihuaView.vue", "action": "implement"}],
+      "instructions": "内置飞花令字库（花/月/风/雪/山/水/春/秋…）。随机抽一字 X，显示『请说出含『X』的诗句』；调 getPoemsByContent(X) 取得参考答案；用户手动输入一句含 X 的诗句，校验其确实包含 X（并可选匹配答案库给提示）；计时器 + 计分（答对+1）；『提示』按钮揭示若干参考答案；『下一字』重置。纯前端，无后端。",
+      "acceptance": ["能抽取飞花令字、显示参考诗句、校验用户输入含该字、计分与提示可用"]
+    },
+    {
+      "id": "CORE-5",
+      "title": "诗词填空 FillView",
+      "owner": "洪修睿",
+      "github": "Coder-YourAdm",
+      "branch": "feature/sprint2-core",
+      "depends_on": ["DATA-2"],
+      "phase": "B",
+      "files": [{"path": "src/views/FillView.vue", "action": "implement"}],
+      "instructions": "从 getAllPoems() 随机选一首，随机选一行随机挖掉 1 个汉字显示为『＿』；用户输入补全的字；校验与原文一致则『答对』并下一题，否则提示错误并给出正确答案；累计答对计数。纯前端。",
+      "acceptance": ["能随机出题、挖空、校验用户补字、对错反馈、下一题"]
+    },
+    {
+      "id": "CORE-6",
+      "title": "集成/联调/合并/验收",
+      "owner": "洪修睿",
+      "github": "Coder-YourAdm",
+      "branch": "feature/sprint2-core",
+      "depends_on": ["DATA-1","DATA-2","DATA-3","LAY-1","LAY-2","LAY-3","LAY-4","VIE-1","VIE-2","VIE-3","VIE-4","THM-0","THM-1","THM-2","THM-3","THM-4","CORE-1","CORE-2","CORE-3","CORE-4","CORE-5"],
+      "phase": "C",
+      "files": [{"path": "src/views/PoemView.vue", "action": "modify"}, {"path": "src/views/ProfileView.vue", "action": "modify"}],
+      "instructions": "1) 协调 PoemView 加『收藏』按钮（调 favorites store.toggle）；2) 各 feature 分支提 PR 合 develop 后，在 develop 跑 npm run dev 走通主链路（首页→分类→详情→朗读→搜索→飞花令→填空→登录→收藏→设置）；3) npm run build 必须通过；4) 提 develop→main PR 合入（main 受保护，需临时放宽保护再恢复）并打 git tag v0.2。",
+      "acceptance": [
+        "develop 上主链路全部页面可访问且数据正确",
+        "npm run build 通过",
+        "main 合入新成果（v0.2），main 保护规则恢复"
+      ]
+    }
+  ]
+}
