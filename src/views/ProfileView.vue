@@ -4,9 +4,35 @@ import { ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useFavoritesStore } from '@/stores/favorites'
 import PoemCard from '@/components/PoemCard.vue'
+import { usePoemHistoryStore } from '@/stores/poemHistory'
 
 const userStore = useUserStore()
 const favStore = useFavoritesStore()
+const historyStore = usePoemHistoryStore()
+
+// 格式化浏览时间
+function formatVisitedAt(timestamp) {
+  const date = new Date(timestamp)
+
+  if (!Number.isFinite(date.getTime())) return ''
+
+  const now = new Date()
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  const pad = (value) => String(value).padStart(2, '0')
+  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`
+
+  if (date.toDateString() === now.toDateString()) {
+    return `今天 ${time}`
+  }
+
+  if (date.toDateString() === yesterday.toDateString()) {
+    return `昨天 ${time}`
+  }
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${time}`
+}
 
 // 头像编辑状态
 const avatarFileInput = ref(null)
@@ -224,29 +250,27 @@ function saveAvatar() {
       </div>
     </div>
 
-    <!-- 3. 我的收藏 -->
-    <section class="favorites-section">
+        <!-- 3. 我的足迹入口 -->
+    <div
+      class="study-entry"
+      @click="$router.push('/history')"
+    >
+      <h3>🕘 我的足迹</h3>
+      <p>查看访问过的诗词 · 共 {{ historyStore.count }} 条记录。</p>
+      <span class="entry-arrow">前往足迹 ›</span>
+    </div>
+
+    <!-- 4. 我的收藏入口 -->
+    <div
+      class="study-entry"
+      @click="$router.push('/favorites')"
+    >
       <h3>❤️ 我的收藏</h3>
+      <p>珍藏喜欢的诗词 · 共 {{ favStore.count }} 首。</p>
+      <span class="entry-arrow">查看收藏 ›</span>
+    </div>
 
-      <div v-if="favStore.list.length > 0" class="poem-grid">
-<PoemCard
-  v-for="poem in favStore.list"
-  :key="poem.id"
-  :id="poem.id"
-  :title="poem.title"
-  :author="poem.author"
-  :dynasty="poem.dynasty"
-  :excerpt="poem.content ? poem.content[0] : ''"
-  :tags="poem.tags"
-/>
-      </div>
-
-      <div v-else class="empty-state">
-        <p>暂无收藏，快去探索诗词吧~</p>
-      </div>
-    </section>
-
-    <!-- 4. 我的学习 -->
+    <!-- 5. 我的学习 -->
     <div
       class="study-entry"
       @click="$router.push('/study')"
@@ -256,7 +280,7 @@ function saveAvatar() {
       <span class="entry-arrow">前往学习 ›</span>
     </div>
 
-    <!-- 5. 个性化设置 -->
+    <!-- 6. 个性化设置 -->
     <div
       class="study-entry"
       @click="$router.push('/settings')"
@@ -266,7 +290,7 @@ function saveAvatar() {
       <span class="entry-arrow">前往设置 ›</span>
     </div>
 
-    <!-- 6. 头像裁剪编辑弹窗 -->
+    <!-- 7. 头像裁剪编辑弹窗 -->
     <div
       v-if="showAvatarEditor"
       class="avatar-modal-overlay"
@@ -540,6 +564,124 @@ function saveAvatar() {
   color: var(--text-secondary, #718071);
   font-size: 14px;
 }
+
+
+/* 我的足迹 */
+.history-section {
+  margin-top: 24px;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.history-header h3 {
+  margin: 0;
+  color: var(--text, #28382e);
+}
+
+.clear-history-btn {
+  padding: 6px 13px;
+  border: 1px solid var(--border, rgba(47, 63, 49, 0.16));
+  border-radius: 999px;
+  color: var(--text-secondary, #718071);
+  background: var(--card-surface, #fffefa);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.clear-history-btn:hover {
+  color: #c45b5b;
+  border-color: #c45b5b;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 20px;
+  border: 1px solid var(--border, rgba(47, 63, 49, 0.12));
+  border-radius: 12px;
+  color: var(--text, #28382e);
+  background: var(--card-surface, #fffefa);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.history-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(47, 63, 49, 0.1);
+}
+
+.history-poem-info {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.history-poem-title {
+  overflow: hidden;
+  color: var(--text, #28382e);
+  font-family: var(--poem-font, "Songti SC", "SimSun", serif);
+  font-size: 16px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-poem-meta {
+  color: var(--text-secondary, #718071);
+  font-size: 13px;
+}
+
+.history-visit-info {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.history-visit-time {
+  color: var(--text-secondary, #999);
+  font-size: 12px;
+}
+
+.history-view-link {
+  color: var(--accent, #5aa56a);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .history-item {
+    padding: 13px 14px;
+    gap: 8px;
+  }
+
+  .history-visit-time {
+    font-size: 11px;
+  }
+}
+
 
 /* 我的收藏 */
 .favorites-section h3 {
