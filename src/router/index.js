@@ -1,4 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { usePoemHistoryStore } from '../stores/poemHistory'
+
+
 
 // 使用懒加载方式引入页面，加快首屏加载速度
 const HomeView         = () => import('../views/HomeView.vue')
@@ -10,27 +13,200 @@ const GameView         = () => import('../views/GameView.vue')
 const FeihuaView       = () => import('../views/FeihuaView.vue')
 const FillView         = () => import('../views/FillView.vue')
 const ProfileView      = () => import('../views/ProfileView.vue')
+const HistoryView      = () => import('../views/HistoryView.vue')
+const FavoritesView    = () => import('../views/FavoritesView.vue')
 const LoginView        = () => import('../views/LoginView.vue')
 const SettingsView     = () => import('../views/SettingsView.vue')
+const StudyView        = () => import('../views/StudyView.vue')
+const BattleView       = () => import('../views/BattleView.vue')
+const RecitationView   = () => import('../views/RecitationView.vue')
+const PoemMapView      = () => import('../views/PoemMapView.vue')
 
 const routes = [
-  { path: '/',               name: 'home',         component: HomeView },
-  { path: '/category',       name: 'category',     component: CategoryView },
-  { path: '/category/:type', name: 'categoryList', component: CategoryListView },
-  { path: '/poem/:id',       name: 'poem',         component: PoemView },
-  { path: '/search',         name: 'search',       component: SearchView },
-  { path: '/game',           name: 'game',         component: GameView },
-  // 静态子路径放在动态路由前
-  { path: '/game/feihua',    name: 'feihua',       component: FeihuaView },
-  { path: '/game/fill',      name: 'fill',         component: FillView },
-  { path: '/profile',        name: 'profile',      component: ProfileView },
-  { path: '/login',          name: 'login',        component: LoginView },
-  { path: '/settings',       name: 'settings',     component: SettingsView },
+  { path: '/', name: 'home', component: HomeView },
+  { path: '/category', name: 'category', component: CategoryView },
+
+  {
+    path: '/category/:type',
+    name: 'categoryList',
+    component: CategoryListView,
+    meta: { showBack: true, backFallback: '/category' },
+  },
+  {
+    path: '/poem/:id',
+    name: 'poem',
+    component: PoemView,
+    meta: { showBack: true, backFallback: '/' },
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: SearchView,
+    meta: { showBack: true, backFallback: '/' },
+  },
+
+  { path: '/game', name: 'game', component: GameView },
+  {
+    path: '/game/feihua',
+    name: 'feihua',
+    component: FeihuaView,
+    meta: { showBack: true, backFallback: '/game' },
+  },
+  {
+    path: '/game/fill',
+    name: 'fill',
+    component: FillView,
+    meta: { showBack: true, backFallback: '/game' },
+  },
+  {
+    path: '/game/recitation',
+    name: 'recitation',
+    component: RecitationView,
+    meta: { showBack: true, backFallback: '/game' },
+  },
+  {
+    path: '/game/map',
+    name: 'poemMap',
+    component: PoemMapView,
+    meta: { showBack: true, backFallback: '/game' },
+  },
+
+  { path: '/profile', name: 'profile', component: ProfileView },
+  {
+  path: '/history',
+  name: 'history',
+  component: HistoryView,
+  meta: { showBack: true, backFallback: '/profile' },
+},
+{
+  path: '/favorites',
+  name: 'favorites',
+  component: FavoritesView,
+  meta: { showBack: true, backFallback: '/profile' },
+},
+  {
+    path: '/login',
+    name: 'login',
+    component: LoginView,
+    meta: { showBack: true, backFallback: '/profile' },
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: SettingsView,
+    meta: { showBack: true, backFallback: '/profile' },
+  },
+  {
+  path: '/study',
+  name: 'study',
+  component: StudyView,
+  meta: { showBack: true, backFallback: '/profile' },
+},
+  { path: '/battle', name: 'battle', component: BattleView },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
 })
+
+// App 内部访问记录，不直接依赖浏览器后退
+const appRouteStack = []
+
+let isAppBackNavigation = false
+let isBrowserHistoryNavigation = false
+
+// 识别浏览器原生前进/后退，保持内部记录同步
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', () => {
+    isBrowserHistoryNavigation = true
+  })
+}
+
+// 记录正常的 App 内页面跳转
+router.afterEach((to, from, failure) => {
+  if (failure) {
+    isAppBackNavigation = false
+    isBrowserHistoryNavigation = false
+    return
+  }
+
+    // S3-T13：记录成功进入的诗词详情页
+  if (to.name === 'poem') {
+    const historyStore = usePoemHistoryStore()
+    historyStore.recordVisit(String(to.params.id || ''))
+  }
+
+  // 用户使用浏览器原生前进/后退时，同步内部访问记录
+  if (isBrowserHistoryNavigation) {
+    isBrowserHistoryNavigation = false
+
+    let previousIndex = -1
+
+    for (let i = appRouteStack.length - 1; i >= 0; i--) {
+      if (appRouteStack[i] === to.fullPath) {
+        previousIndex = i
+        break
+      }
+    }
+
+    if (previousIndex >= 0) {
+      appRouteStack.splice(previousIndex + 1)
+    } else {
+      appRouteStack.push(to.fullPath)
+    }
+
+    return
+  }
+
+  // 自定义返回操作不应再次加入访问记录
+  if (isAppBackNavigation) {
+    isAppBackNavigation = false
+    return
+  }
+
+  // 记录应用首次进入的页面
+  if (from.matched.length === 0) {
+    appRouteStack.push(to.fullPath)
+    return
+  }
+
+  if (to.fullPath !== from.fullPath) {
+    appRouteStack.push(to.fullPath)
+
+    // 限制记录数量，避免无限增长
+    if (appRouteStack.length > 50) {
+      appRouteStack.shift()
+    }
+  }
+})
+
+// App 内统一返回方法
+export function goAppBack(fallback = '/') {
+  const currentRoute = router.currentRoute.value
+  const currentIndex = appRouteStack.lastIndexOf(currentRoute.fullPath)
+
+  // 优先返回 App 内上一个访问过的页面
+  if (currentIndex > 0) {
+    const previousRoute = appRouteStack[currentIndex - 1]
+
+    appRouteStack.splice(currentIndex)
+    isAppBackNavigation = true
+
+    return router.push(previousRoute)
+  }
+
+  // 没有可用的内部历史记录时，使用页面预设的返回位置
+  const fallbackRoute = currentRoute.meta.backFallback || fallback
+
+  if (fallbackRoute === currentRoute.fullPath) {
+    return Promise.resolve()
+  }
+
+  appRouteStack.splice(0, appRouteStack.length, fallbackRoute)
+  isAppBackNavigation = true
+
+  return router.push(fallbackRoute)
+}
 
 export default router
