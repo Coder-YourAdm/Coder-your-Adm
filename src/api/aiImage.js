@@ -11,15 +11,24 @@
 //   约定错误码：RATE_LIMIT(限流) / NO_QUOTA(免费额度用尽) / UPSTREAM_ERROR(模型侧失败) / BAD_REQUEST(参数问题)
 //
 // ── 切换到真实后端 ──────────────────────────────────────────
-// 在项目根目录 .env 里加一行：
-//   VITE_AI_IMAGE_API_BASE=https://<项目id>.supabase.co/functions/v1/ai-image
-// 不配置或留空 → 自动走本地 mock（演示模式，不调任何外部接口）。
-// 页面代码不感知两者差别。
+// 默认走线上代理（Render 免费档），任何人 clone 后无需任何配置即可真实生图。
+// .env 里可覆盖 VITE_AI_IMAGE_API_BASE：
+//   指向自定义代理地址（如 http://localhost:8788/api 走本地代理开发）
+//   或填 "mock" 强制走本地演示模式（占位图，不调任何外部接口）。
+// 硅基流动 key 只存在云端代理的环境变量里，前端代码与仓库中永远不出现。
+//
+// ── 线上架构（S3-T07 定稿）──────────────────────────────────
+//   前端 → https://shiyun-ai-image.onrender.com/api（Render, 新加坡区）
+//        → 硅基流动 Kwai-Kolors/Kolors（生图免费）
+//   注意：免费档 15 分钟无访问会休眠，首次请求需 30~60 秒唤醒，超时已放宽到 90s。
 
 import { getPoemById, getRandomPoems } from './poems'
 
-const API_BASE = String(import.meta.env.VITE_AI_IMAGE_API_BASE ?? '').trim()
-const REQUEST_TIMEOUT = 60000
+// 线上默认地址（公开 URL，非机密，可以进仓库）
+const DEFAULT_API_BASE = 'https://shiyun-ai-image.onrender.com/api'
+const RAW_BASE = String(import.meta.env.VITE_AI_IMAGE_API_BASE ?? '').trim()
+const API_BASE = RAW_BASE.toLowerCase() === 'mock' ? '' : RAW_BASE || DEFAULT_API_BASE
+const REQUEST_TIMEOUT = 90000
 
 export const AI_IMAGE_STYLES = [
   { value: 'ink', label: '水墨写意' },
@@ -28,7 +37,7 @@ export const AI_IMAGE_STYLES = [
   { value: 'photo', label: '摄影写实' },
 ]
 
-/** 当前是否处于演示模式（未接后端） */
+/** 当前是否处于演示模式（.env 里把 VITE_AI_IMAGE_API_BASE 设为 "mock" 时） */
 export function isAiImageMockMode() {
   return !API_BASE
 }
