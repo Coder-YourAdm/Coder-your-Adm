@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# 密钥安全：真实环境变量文件一律不入库（模板 .env.example 除外）
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
