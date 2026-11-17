@@ -21,6 +21,7 @@ const StudyView        = () => import('../views/StudyView.vue')
 const BattleView       = () => import('../views/BattleView.vue')
 const RecitationView   = () => import('../views/RecitationView.vue')
 const PoemMapView      = () => import('../views/PoemMapView.vue')
+const AiImageView      = () => import('../views/AiImageView.vue')
 
 const routes = [
   { path: '/', name: 'home', component: HomeView },
@@ -68,6 +69,12 @@ const routes = [
     path: '/game/map',
     name: 'poemMap',
     component: PoemMapView,
+    meta: { showBack: true, backFallback: '/game' },
+  },
+  {
+    path: '/game/ai-image',
+    name: 'aiImage',
+    component: AiImageView,
     meta: { showBack: true, backFallback: '/game' },
   },
 

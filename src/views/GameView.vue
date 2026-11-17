@@ -42,6 +42,14 @@ const games = [
     symbol: '游',
     action: '打开地图',
   },
+  {
+    name: 'aiImage',
+    title: 'AI 诗画',
+    subtitle: '一句诗，一幅画',
+    description: '选择诗词与画风，AI 依诗句意境生成专属画卷。',
+    symbol: '画',
+    action: '开始创作',
+  },
 ]
 </script>
 
