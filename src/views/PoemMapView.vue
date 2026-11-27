@@ -6,6 +6,26 @@ import { getAllPoems } from '@/api/poems'
 const router = useRouter()
 const poems = getAllPoems()
 
+// ---- 朝代主题配色（仿古地图的淡雅分色，低饱和以配水墨背景）----
+const DYNASTY_COLORS = {
+  '全部':    { land: '#e7ecdf', deep: '#cdd8c6', accent: '#5a7a63' },
+  '先秦':    { land: '#ece7d8', deep: '#d8cfb7', accent: '#8a7c55' },
+  '汉':      { land: '#e9e4d4', deep: '#d4c9ad', accent: '#8a7449' },
+  '三国':    { land: '#e3e8e6', deep: '#c6d3cf', accent: '#4f756e' },
+  '西晋':    { land: '#e6e9df', deep: '#ccd7c4', accent: '#617a54' },
+  '东晋':    { land: '#e2ebe4', deep: '#c5d8c8', accent: '#4e7a5c' },
+  '南朝':    { land: '#e6ece1', deep: '#cbd9c0', accent: '#5c7a4b' },
+  '北朝':    { land: '#ece5df', deep: '#d9c9bd', accent: '#8a6a55' },
+  '隋':      { land: '#e8e6d6', deep: '#d2cdb0', accent: '#7a7547' },
+  '唐':      { land: '#efe6d3', deep: '#ddcba8', accent: '#8a6f3c' },
+  '五代':    { land: '#e8e5e0', deep: '#d0c9c1', accent: '#756a5e' },
+  '宋':      { land: '#e4ebe6', deep: '#c5d6c9', accent: '#4c7660' },
+  '元':      { land: '#e8e4ec', deep: '#cec6d9', accent: '#6d5e83' },
+  '明':      { land: '#ece3d8', deep: '#d7c3ad', accent: '#8a6547' },
+  '清':      { land: '#e6e0e6', deep: '#cbbecb', accent: '#725b72' },
+}
+const palette = computed(() => DYNASTY_COLORS[selectedDynasty.value] || DYNASTY_COLORS['全部'])
+
 // ---- 筛选 ----
 const selectedDynasty = ref('全部')
 const selectedTheme = ref('全部')
@@ -207,7 +227,7 @@ function radiusFor(count) {
     <header class="page-heading">
       <p class="eyebrow">游戏 · 山河寻踪</p>
       <h1>诗词地图</h1>
-      <p>500 首诗词，按地点标注在山河之间。滚轮缩放、拖动平移，点亮一处看遍在此写下的诗。</p>
+      <p>仿古舆图 · 500 首诗词散落山河。滚轮缩放、拖动平移，点亮一处看遍在此写下的诗。</p>
     </header>
 
     <section class="map-toolbar">
@@ -236,22 +256,71 @@ function radiusFor(count) {
         @pointercancel="onPointerUp"
       >
         <defs>
-          <pattern id="map-grid" width="48" height="48" patternUnits="userSpaceOnUse">
-            <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#718071" stroke-opacity=".14" stroke-width=".7" />
+          <!-- 宣纸纹理：程序化，无外部图片 -->
+          <filter id="paper-grain" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" stitchTiles="stitch" result="noise" />
+            <feColorMatrix in="noise" type="saturate" values="0" result="gray" />
+            <feComponentTransfer in="gray" result="faded">
+              <feFuncA type="linear" slope="0.06" />
+            </feComponentTransfer>
+            <feBlend in="SourceGraphic" in2="faded" mode="multiply" />
+          </filter>
+          <pattern id="map-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#6f7a68" stroke-opacity=".13" stroke-width=".6" />
           </pattern>
+          <!-- 国土轮廓作为色块裁剪区，保证朝代淡色只在境内渲染 -->
+          <clipPath id="china-clip">
+            <path d="M34 189 48 169 68 159 84 141 103 131 122 117 151 97 178 91 207 94 231 78 258 83 283 91 312 77 346 84 374 68 409 64 438 77 461 91 490 100 518 95 548 108 578 126 606 139 594 159 574 169 571 191 551 200 536 216 516 223 501 237 512 254 501 277 485 296 474 320 460 338 437 349 421 366 394 373 379 354 360 349 341 360 320 354 301 340 283 333 266 340 248 328 235 310 216 306 199 314 177 305 158 295 139 286 119 279 102 264 86 256 73 240 60 223 44 207Z" />
+          </clipPath>
         </defs>
-        <rect x="-32" y="-23" width="704" height="506" fill="#eef2e9" />
+
+        <!-- 宣纸底 -->
+        <rect x="-32" y="-23" width="704" height="506" :fill="palette.land" filter="url(#paper-grain)" />
         <rect x="-32" y="-23" width="704" height="506" fill="url(#map-grid)" />
+        <!-- 朝代淡色文化圈（装饰性，不表示精确疆域） -->
+        <g clip-path="url(#china-clip)" :opacity="selectedDynasty === '全部' ? 0.35 : 0.6">
+          <ellipse cx="360" cy="285" rx="145" ry="115" :fill="palette.deep" opacity=".55" />
+          <ellipse cx="440" cy="320" rx="105" ry="95" :fill="palette.deep" opacity=".4" />
+          <ellipse cx="270" cy="225" rx="95" ry="80" :fill="palette.deep" opacity=".35" />
+        </g>
         <path
           class="china-outline"
           d="M34 189 48 169 68 159 84 141 103 131 122 117 151 97 178 91 207 94 231 78 258 83 283 91 312 77 346 84 374 68 409 64 438 77 461 91 490 100 518 95 548 108 578 126 606 139 594 159 574 169 571 191 551 200 536 216 516 223 501 237 512 254 501 277 485 296 474 320 460 338 437 349 421 366 394 373 379 354 360 349 341 360 320 354 301 340 283 333 266 340 248 328 235 310 216 306 199 314 177 305 158 295 139 286 119 279 102 264 86 256 73 240 60 223 44 207Z"
+          :stroke="palette.accent"
         />
-        <path class="china-island" d="M470 365c9-7 16 1 13 13-2 10-9 20-14 17-6-4-5-21 1-30Z" />
-        <path class="china-island" d="M414 393c10-4 18 2 14 9-5 8-20 8-24 2-3-4 3-9 10-11Z" />
+        <path class="china-island" d="M470 365c9-7 16 1 13 13-2 10-9 20-14 17-6-4-5-21 1-30Z" :stroke="palette.accent" />
+        <path class="china-island" d="M414 393c10-4 18 2 14 9-5 8-20 8-24 2-3-4 3-9 10-11Z" :stroke="palette.accent" />
         <path class="map-river" d="M177 249 228 253 273 265 315 272 357 270 402 268 444 275 480 289" />
         <path class="map-river" d="M202 227 244 230 281 226 315 215 354 218 388 204 427 199" />
         <text class="map-label river-label" x="408" y="286">长江</text>
         <text class="map-label river-label" x="356" y="209">黄河</text>
+
+        <!-- 仿古地图装饰：外框、图名、图例、比例尺、罗盘 -->
+        <g class="map-ornament" :stroke="palette.accent">
+          <rect x="6" y="6" width="628" height="448" fill="none" stroke-width="1.4" opacity=".5" />
+          <rect x="11" y="11" width="618" height="438" fill="none" stroke-width=".5" opacity=".35" />
+        </g>
+        <g class="map-legend">
+          <rect x="24" y="376" width="150" height="66" rx="3" fill="#fffdf5" fill-opacity=".82" :stroke="palette.accent" stroke-opacity=".45" stroke-width=".8" />
+          <text x="34" y="393" class="legend-title">诗韵舆图 · 图例</text>
+          <circle cx="40" cy="407" r="5" fill="#fffdf5" :stroke="palette.accent" stroke-width="1.6" />
+          <text x="52" y="411" class="legend-text">诗词地点（数字为首数）</text>
+          <line x1="34" y1="424" x2="66" y2="424" :stroke="palette.accent" stroke-width="1" stroke-dasharray="2 2" />
+          <text x="72" y="427" class="legend-text">虚线指向真实位置</text>
+        </g>
+        <g class="map-compass" :transform="'translate(600,60)'" :stroke="palette.accent">
+          <circle r="17" fill="#fffdf5" fill-opacity=".6" stroke-width=".8" />
+          <path d="M0 -13 L3 -3 0 0 -3 -3Z" fill="currentColor" stroke="none" />
+          <path d="M0 13 L3 3 0 0 -3 3Z" fill="none" stroke-width=".8" />
+          <text x="0" y="-21" class="compass-n" text-anchor="middle">北</text>
+        </g>
+        <g class="map-scale" :transform="'translate(470,430)'" :stroke="palette.accent">
+          <line x1="0" y1="0" x2="90" y2="0" stroke-width="1.2" />
+          <line x1="0" y1="-4" x2="0" y2="4" stroke-width="1.2" />
+          <line x1="45" y1="-3" x2="45" y2="3" stroke-width=".8" />
+          <line x1="90" y1="-4" x2="90" y2="4" stroke-width="1.2" />
+          <text x="45" y="14" class="scale-text" text-anchor="middle">约 500 公里（示意）</text>
+        </g>
 
         <g
           v-for="group in layoutPoints"
@@ -313,7 +382,7 @@ function radiusFor(count) {
     </section>
 
     <p class="map-attribution-note">
-      中国轮廓为本地绘制的地理示意，不用于导航。地点按诗词文本线索、作者活动地或朝代文化中心推断，坐标为地名附近的约略位置，精度有限。
+      本图为本地绘制的仿古地理示意（含台湾及南海诸岛轮廓），仅用于文化展示、不作导航；朝代淡色块为装饰性文化圈，不表示精确疆域。地点按诗词文本线索、作者活动地或朝代文化中心推断，坐标为地名附近的约略位置。
     </p>
   </main>
 </template>
@@ -330,14 +399,21 @@ function radiusFor(count) {
 .map-search { flex: 1; min-width: 12rem; }
 .map-count { margin-left: auto; font-weight: 600; }
 
-.map-figure { position: relative; margin: 0; overflow: hidden; border: 1px solid var(--border, rgba(47,63,49,.14)); border-radius: 1.15rem; background: #eef2e9; }
-.poem-map { display: block; width: 100%; height: clamp(360px, 56vh, 580px); background: #eef2e9; cursor: grab; touch-action: none; user-select: none; }
+.map-figure { position: relative; margin: 0; overflow: hidden; border: 1px solid rgba(90,110,85,.32); border-radius: 4px; background: #e9ecdf; box-shadow: inset 0 0 40px rgba(90,80,50,.08), 0 6px 22px rgba(40,56,46,.09); }
+.poem-map { display: block; width: 100%; height: clamp(360px, 56vh, 580px); background: #e9ecdf; cursor: grab; touch-action: none; user-select: none; }
 .poem-map:active { cursor: grabbing; }
-.china-outline { fill: #dce8d8; stroke: #8ca58c; stroke-width: 2; stroke-linejoin: round; }
-.china-island { fill: #dce8d8; stroke: #8ca58c; stroke-width: 1.3; }
-.map-river { fill: none; stroke: #8ab1bd; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: .8; }
-.map-label { fill: #65796b; font-family: var(--poem-font, "Songti SC", serif); text-anchor: middle; pointer-events: none; }
-.river-label { fill: #567e89; font-size: 10px; }
+.china-outline { fill: transparent; stroke-width: 1.8; stroke-linejoin: round; }
+.china-island { fill: transparent; stroke-width: 1.1; }
+.map-river { fill: none; stroke: #8aa9ad; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: .75; }
+.map-label { fill: #5c6b5b; font-family: var(--poem-font, "Songti SC", serif); text-anchor: middle; pointer-events: none; }
+.river-label { fill: #5b7f86; font-size: 10px; }
+.map-ornament { fill: none; pointer-events: none; }
+.legend-title { fill: #4a5c49; font-family: var(--poem-font, "Songti SC", serif); font-size: 11px; font-weight: 700; }
+.legend-text { fill: #5c6b5b; font-size: 9px; }
+.map-compass, .map-scale { fill: #4a5c49; pointer-events: none; }
+.map-compass { color: #5a7a63; }
+.compass-n { fill: #4a5c49; font-family: var(--poem-font, "Songti SC", serif); font-size: 10px; }
+.scale-text { fill: #5c6b5b; font-size: 8px; }
 
 .poem-map-point { cursor: pointer; outline: none; }
 .point-leader { stroke: var(--accent, #65846c); stroke-opacity: .55; stroke-dasharray: 2 2; pointer-events: none; }
