@@ -10,6 +10,25 @@ const poem = computed(() => getPoemById(String(route.params.id || '')))
 const audioUnavailable = ref(false)
 const isFavorite = computed(() => poem.value ? favorites.has(poem.value.id) : false)
 
+const VOICES = [
+  { key: 'female', icon: '🌸', label: '优雅女声', hint: '晓晓 · 温婉舒缓' },
+  { key: 'male', icon: '🎙️', label: '雄浑男声', hint: '云健 · 沉稳有力' },
+  { key: 'gugu', icon: '🦆', label: '咕咕嘎嘎', hint: '卡通萌音 · 咕咕嘎嘎～' },
+]
+const VOICE_KEY = 'shiyun-voice'
+
+function readVoice() {
+  try {
+    const saved = localStorage.getItem(VOICE_KEY)
+    return VOICES.some((v) => v.key === saved) ? saved : 'female'
+  } catch {
+    return 'female'
+  }
+}
+
+const voice = ref(readVoice())
+const currentVoice = computed(() => VOICES.find((v) => v.key === voice.value) || VOICES[0])
+
 const poemLines = computed(() => {
   const content = poem.value?.content
   if (Array.isArray(content)) return content.filter((line) => String(line).trim())
@@ -29,11 +48,23 @@ const detailSections = computed(() => {
   ].filter(({ key }) => hasContent(poem.value[key]))
 })
 
+// getPoemAudio 已经包含 BASE_URL，不能再拼一次（否则成了 //audio/...）。
 const audioSrc = computed(() => {
   if (!poem.value) return ''
-  const path = getPoemAudio(poem.value.id)
-  return path ? `${import.meta.env.BASE_URL}${path}` : ''
+  const base = getPoemAudio(poem.value.id)
+  return base ? base.replace(/\.mp3$/, `-${voice.value}.mp3`) : ''
 })
+
+function selectVoice(key) {
+  if (voice.value === key) return
+  voice.value = key
+  audioUnavailable.value = false
+  try {
+    localStorage.setItem(VOICE_KEY, key)
+  } catch {
+    // 隐私模式下不持久化，不影响本次选择
+  }
+}
 
 watch(
   () => route.params.id,
@@ -88,11 +119,33 @@ function toggleFavorite() {
       <p v-if="!poemLines.length" class="muted">暂无正文内容</p>
     </section>
 
-    <section v-if="audioSrc && !audioUnavailable" class="audio-section" aria-label="诗词朗读">
+    <section v-if="poem.id" class="audio-section" aria-label="诗词朗读">
       <h2>诗词朗读</h2>
-      <audio controls preload="none" :src="audioSrc" @error="audioUnavailable = true">
+      <div class="voice-tabs" role="group" aria-label="选择朗读音色">
+        <button
+          v-for="item in VOICES"
+          :key="item.key"
+          class="voice-tab"
+          :class="{ active: voice === item.key }"
+          type="button"
+          :aria-pressed="voice === item.key"
+          @click="selectVoice(item.key)"
+        >
+          {{ item.icon }} {{ item.label }}
+        </button>
+      </div>
+      <p class="voice-hint">{{ currentVoice.hint }}</p>
+      <audio
+        v-if="!audioUnavailable"
+        :key="audioSrc"
+        controls
+        preload="none"
+        :src="audioSrc"
+        @error="audioUnavailable = true"
+      >
         您的浏览器不支持音频播放。
       </audio>
+      <p v-if="audioUnavailable" class="audio-error" role="status">当前音色加载失败，换个音色试试～</p>
     </section>
     <p v-else class="audio-unavailable" role="status">暂无朗读音频</p>
 
@@ -221,6 +274,58 @@ h1 {
 
 .audio-section audio {
   width: 100%;
+}
+
+.voice-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.voice-tab {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--accent, #65846c) 24%, transparent);
+  border-radius: 999px;
+  color: var(--text, #28382e);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.voice-tab:hover {
+  background: color-mix(in srgb, var(--accent, #65846c) 10%, transparent);
+}
+
+.voice-tab.active {
+  border-color: var(--accent, #65846c);
+  color: #fff;
+  background: var(--accent, #65846c);
+}
+
+.voice-hint {
+  margin: 0 0 0.6rem;
+  color: var(--muted, #777b70);
+  font-size: 0.78rem;
+}
+
+.gugu-play {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px dashed var(--accent, #65846c);
+  border-radius: 0.75rem;
+  color: var(--accent, #65846c);
+  background: color-mix(in srgb, var(--accent, #65846c) 6%, transparent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.audio-error {
+  margin: 0.5rem 0 0;
+  color: #b4604f;
+  font-size: 0.82rem;
 }
 
 .audio-unavailable {
