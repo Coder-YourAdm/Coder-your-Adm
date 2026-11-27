@@ -76,7 +76,8 @@ const zoomPct = computed(() => Math.round(scale.value * 100))
 const activePlace = ref(null)
 
 function clampView(v) {
-  const w = Math.min(BASE.w, Math.max(80, v.w))
+  // 最多放大 32 倍（viewBox 宽最小 20），缩小回全图
+  const w = Math.min(BASE.w, Math.max(20, v.w))
   const h = w * (BASE.h / BASE.w)
   return {
     w,
@@ -85,6 +86,54 @@ function clampView(v) {
     y: Math.min(BASE.h - h, Math.max(0, v.y)),
   }
 }
+
+// ---- 防重叠布局：屏幕上挨得太近的点螺旋散开，用引线连回真实坐标 ----
+// 半径按"屏幕像素"恒定：缩放越大，SVG 单位半径越小，点之间自然分开。
+const layoutPoints = computed(() => {
+  const s = scale.value                       // 1 = 全图, 越大越放大
+  const unit = 1 / s                           // 1 屏幕px 对应的 SVG 单位
+  const baseRadius = 9 * unit                  // 标记半径（屏幕恒定 9px）
+  const minDist = baseRadius * 2.5             // 触发散开的最小间距
+  const placed = []
+
+  //  poetry 多的点优先占住原位，其余点绕开
+  const ordered = [...basePoints.value].sort((a, b) => b.poems.length - a.poems.length)
+  for (const p of ordered) {
+    let dx = 0
+    let dy = 0
+    let ring = 0
+    // 最多尝试若干圈，找不与已放点冲突的位置
+    for (ring = 0; ring < 12; ring++) {
+      const count = ring === 0 ? 1 : ring * 8
+      let found = false
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2 + ring * 0.4
+        const dist = ring === 0 ? 0 : ring * minDist
+        const tx = p.x + Math.cos(angle) * dist
+        const ty = p.y + Math.sin(angle) * dist
+        const collide = placed.some((q) => Math.hypot(q.mx - tx, q.my - ty) < minDist)
+        if (!collide) {
+          dx = tx - p.x
+          dy = ty - p.y
+          found = true
+          break
+        }
+      }
+      if (found) break
+    }
+    placed.push({
+      ...p,
+      mx: p.x + dx,
+      my: p.y + dy,
+      radius: baseRadius,
+      coreRadius: Math.max(1.5, baseRadius * 0.42),
+      hasLeader: Math.hypot(dx, dy) > baseRadius * 0.5,
+      fontSize: Math.max(5, 9 * unit),
+      strokeWidth: Math.max(0.6, 2 * unit),
+    })
+  }
+  return placed
+})
 
 function zoomAt(clientX, clientY, factor, svgEl) {
   if (!svgEl) return
@@ -205,7 +254,7 @@ function radiusFor(count) {
         <text class="map-label river-label" x="356" y="209">黄河</text>
 
         <g
-          v-for="group in basePoints"
+          v-for="group in layoutPoints"
           :key="group.key"
           class="poem-map-point"
           :class="{ active: activePlace?.key === group.key }"
@@ -217,9 +266,17 @@ function radiusFor(count) {
           @keydown.space.prevent="selectPlace(group)"
         >
           <title>{{ group.ancientName }} · {{ group.poems.length }} 首诗</title>
-          <circle class="point-halo" :cx="group.x" :cy="group.y" :r="radiusFor(group.poems.length)" />
-          <circle class="point-core" :cx="group.x" :cy="group.y" :r="Math.max(2.5, radiusFor(group.poems.length) - 3)" />
-          <text class="point-count" :x="group.x" :y="group.y + 3">{{ group.poems.length }}</text>
+          <line
+            v-if="group.hasLeader"
+            class="point-leader"
+            :x1="group.x" :y1="group.y"
+            :x2="group.mx" :y2="group.my"
+            :stroke-width="Math.max(0.5, 1 * (1 / scale))"
+          />
+          <circle class="point-anchor" :cx="group.x" :cy="group.y" :r="Math.max(1, 1.6 * (1 / scale))" />
+          <circle class="point-halo" :cx="group.mx" :cy="group.my" :r="group.radius" :stroke-width="group.strokeWidth" />
+          <circle class="point-core" :cx="group.mx" :cy="group.my" :r="group.coreRadius" />
+          <text class="point-count" :x="group.mx" :y="group.my + group.fontSize * 0.35" :font-size="group.fontSize">{{ group.poems.length }}</text>
         </g>
       </svg>
 
@@ -283,9 +340,11 @@ function radiusFor(count) {
 .river-label { fill: #567e89; font-size: 10px; }
 
 .poem-map-point { cursor: pointer; outline: none; }
-.point-halo { fill: #fffefa; stroke: var(--accent, #65846c); stroke-width: 2; transition: fill 150ms ease, stroke 150ms ease; }
+.point-leader { stroke: var(--accent, #65846c); stroke-opacity: .55; stroke-dasharray: 2 2; pointer-events: none; }
+.point-anchor { fill: var(--accent, #65846c); fill-opacity: .5; pointer-events: none; }
+.point-halo { fill: #fffefa; stroke: var(--accent, #65846c); transition: fill 150ms ease, stroke 150ms ease; }
 .point-core { fill: var(--accent, #65846c); pointer-events: none; }
-.point-count { fill: var(--accent, #65846c); font-size: 9px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+.point-count { fill: var(--accent, #65846c); font-weight: 700; text-anchor: middle; pointer-events: none; }
 .poem-map-point:hover .point-halo, .poem-map-point:focus .point-halo, .poem-map-point.active .point-halo { fill: #e7ae6a; stroke: #b9813f; }
 .poem-map-point:hover .point-count, .poem-map-point.active .point-count { fill: #7a4e17; }
 
